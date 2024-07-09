@@ -86,57 +86,71 @@ class ProjectionHead(nn.Module):
         dropout=DROPOUT
     ):
         super().__init__()
-        self.projection = nn.Linear(embedding_dim, projection_dim)
+
+        self.projection_order = nn.Linear(embedding_dim, projection_dim)
+        self.fc_order = nn.Linear(projection_dim, projection_dim)
+
+        self.projection_family = nn.Linear(embedding_dim, projection_dim)
+        self.fc_family = nn.Linear(projection_dim, projection_dim)
+
         self.gelu = nn.GELU()
-        self.fc = nn.Linear(projection_dim, projection_dim)
         self.dropout = nn.Dropout(dropout)
         self.layer_norm = nn.LayerNorm(projection_dim)
+
+        
     
     def forward(self, x):
-        projected = self.projection(x)
-        x = self.gelu(projected)
-        x = self.fc(x)
-        x = self.dropout(x)
-        x = x + projected
-        x = self.layer_norm(x)
-        return x
+
+        projected_order = self.projection_order(x)
+        x_order = self.gelu(x_order)
+        x_order = self.fc_order(x_order)
+        x_order = self.dropout(x_order)
+        x_order = x_order + projected_order
+        x_order = self.layer_norm(x_order)
+
+        projected_family = self.projection_family(x)
+        x_family = self.gelu(x_family)
+        x_family = self.fc_family(x_family)
+        x_family = self.dropout(x_family)
+        x_family = x_family + projected_family
+        x_family = self.layer_norm(x_family)
+
+        return x_order, x_family
 
 
-class CLIPModel(nn.Module):
+class BouillaClip(nn.Module):
     def __init__(
         self,
         temperature=TEMPERATURE,
-        image_embedding=768,
-        text_embedding=768,
+        dna_embedding=768,
+        taxa_embedding=768,
     ):
         super().__init__()
-        self.image_encoder = ImageEncoder()
-        self.text_encoder = TextEncoder()
-        self.image_projection = ProjectionHead(embedding_dim=image_embedding)
-        self.text_projection = ProjectionHead(embedding_dim=text_embedding)
+        self.dna_encoder = DNAEncoder()
+        self.taxa_encoder = TaxEncoder()
+
+        self.dna_projection = ProjectionHead(embedding_dim=dna_embedding)
+        self.taxa_projection = ProjectionHead(embedding_dim=taxa_embedding)
+
+
         self.temperature = temperature
 
     def forward(self, batch):
         # Getting Image and Text Features
-        image_features = self.image_encoder(batch["image"])
-        text_features = self.text_encoder(
-            input_ids=batch["input_ids"], attention_mask=batch["attention_mask"]
+        dna_features = self.dna_encoder(batch["dna_input_ids"], batch["dna_attention_mask"])
+        taxa_features = self.taxa_encoder(
+            input_ids=batch["taxa_input_ids"], attention_mask=batch["taxa_attention_mask"]
         )
+
         # Getting Image and Text Embeddings (with same dimension)
-        image_embeddings = self.image_projection(image_features)
-        text_embeddings = self.text_projection(text_features)
+        dna_embedding_order, dna_embedding_family = self.dna_projection(dna_features)
+        taxa_embedding_order, taxa_embedding_family = self.taxa_projection(taxa_features)
 
         # Calculating the Loss
-        logits = (text_embeddings @ image_embeddings.T) / self.temperature
-        images_similarity = image_embeddings @ image_embeddings.T
-        texts_similarity = text_embeddings @ text_embeddings.T
-        targets = F.softmax(
-            (images_similarity + texts_similarity) / 2 * self.temperature, dim=-1
-        )
-        texts_loss = cross_entropy(logits, targets, reduction='none')
-        images_loss = cross_entropy(logits.T, targets.T, reduction='none')
-        loss =  (images_loss + texts_loss) / 2.0 # shape: (batch_size)
-        return loss.mean()
+        loss_order = contrastive_loss(dna_embedding_order, taxa_embedding_order, self.temperature)
+        loss_family = contrastive_loss(dna_embedding_family, taxa_embedding_family, self.temperature)
+
+        return loss_order + loss_family
 
 
 def cross_entropy(preds, targets, reduction='none'):
