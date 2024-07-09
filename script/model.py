@@ -1,6 +1,9 @@
 from torch import nn
 from transformers import AutoTokenizer, AutoModel
 from transformers.models.bert.configuration_bert import BertConfig
+from itertools import product
+import tokenizer
+
 
 class DNAEncoder(nn.Module):
     """
@@ -8,32 +11,28 @@ class DNAEncoder(nn.Module):
     """
 
     def __init__(
-        self, model_name="zhihan1996/DNABERT-2-117M", pretrained= None
+        self, model_name="zhihan1996/DNABERT-2-117M", kmer = None
     ):
         
         super().__init__()
 
 
-        self.config = BertConfig.from_pretrained("zhihan1996/DNABERT-2-117M")
-        self.model = AutoModel.from_pretrained("zhihan1996/DNABERT-2-117M", trust_remote_code=True, config=self.config)
+        self.config = BertConfig.from_pretrained(model_name)
+        self.model = AutoModel.from_pretrained(model_name, trust_remote_code=True, config=self.config)
         
-        self.tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
-        
-        if not self.tokenizer.pad_token:
-            self.tokenizer.add_special_tokens({'pad_token': '[PAD]'})
-            
-        # if pretrained : 
-        #     self.tokenizer = AutoTokenizer.from_pretrained(pretrained, trust_remote_code=True)
-        #     self.model = AutoModel.from_pretrained(pretrained, trust_remote_code=True)
-        # else :
-        #     self.tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
-        #     self.model = AutoModel.from_pretrained(model_name, trust_remote_code=True)
 
-        # for p in self.model.parameters():
-        #     p.requires_grad = trainable
+
+        if kmer :
+            
+            self.tokenizer = tokenizer.KmerTokenizer(k=kmer)
+            
+        else :
+            self.tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
+
+        self.target_token_idx = 0
 
     def forward(self,  input_ids, attention_mask):
-        return self.model(input_ids=input_ids, attention_mask=attention_mask)[0] #get emmbedding
+        return self.model(input_ids=input_ids, attention_mask=attention_mask)[0:self.target_token_idx,:] #get emmbedding
     
 
 class TaxEncoder(nn.Module):
@@ -59,28 +58,20 @@ class TaxEncoder(nn.Module):
 
 if __name__=='__main__':
 
-
-    dna_model=DNAEncoder()
     dna = "ACGTAGCATCGGATCTATCTATCGACACTTGGTTATCGATCTACGAGCATCTCGTTAGC"
 
-    inputs = dna_model.tokenizer(dna, return_tensors='pt', return_offsets_mapping=True)
+    dna_model=DNAEncoder(kmer=4,model_name="zhihan1996/DNABERT-S") #
 
-    # Extract the token ids and the offsets
+    inputs = dna_model.tokenizer(dna, return_tensors='pt')
+
+
     input_ids = inputs["input_ids"]
-    offset_mapping = inputs["offset_mapping"]
-
-    # Print input ids and offset mapping for inspection
-    print(f"Input IDs: {input_ids}")
-    print(f"Offset Mapping: {offset_mapping}")
-
-    # Check the position of the [CLS] token
+    
     cls_token_id = dna_model.tokenizer.cls_token_id
-    cls_position = (input_ids[0] == cls_token_id).nonzero(as_tuple=True)[0].item()
 
-    print(f"[CLS] token position: {cls_position}")
-
-    # Obtain the hidden states
     hidden_states = dna_model.model(input_ids)
 
-    # Print hidden states
-    # print(hidden_states)
+    decode_input = dna_model.tokenizer.decode(input_ids[0])
+    print(f"Input sequence: {decode_input}")
+
+    print(hidden_states[0].shape)  # (batch_size, sequence_length, hidden_size)
