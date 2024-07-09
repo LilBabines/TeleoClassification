@@ -7,6 +7,7 @@ import os
 from transformers import GPT2Tokenizer, GPT2LMHeadModel, GPT2Config
 from transformers import Trainer, TrainingArguments
 from datasets import load_dataset
+import torch
 
 print(os.getcwd())
 
@@ -37,7 +38,7 @@ class DNAEncoder(nn.Module):
         self.target_token_idx = 0
 
     def forward(self,  input_ids, attention_mask):
-        return self.model(input_ids=input_ids, attention_mask=attention_mask)[0:self.target_token_idx,:] #get emmbedding
+        return self.model(input_ids=input_ids, attention_mask=attention_mask)[0][0,self.target_token_idx,:] 
     
 
 class TaxEncoder(nn.Module):
@@ -63,19 +64,20 @@ class TaxEncoder(nn.Module):
         self.tokenizer.add_tokens(' ')
 
         # Initialize a GPT-2 model
-        self.model = GPT2LMHeadModel.from_pretrained('TaxaGPT2', config='TaxaGPT2/config.json')
+        self.model = GPT2LMHeadModel.from_pretrained('./TaxaGPT2/', config='./TaxaGPT2/config.json')
 
         # we are using the CLS token hidden representation as the sentence's embedding
         self.target_token_idx = 0
 
     def forward(self, input_ids, attention_mask):
-        output = self.model(input_ids=input_ids, attention_mask=attention_mask)
-        last_hidden_state = output.last_hidden_state
-        return last_hidden_state[:, self.target_token_idx, :]
+        return self.model(input_ids=input_ids, attention_mask=attention_mask)[0][:, self.target_token_idx, :]
+        
 
 
 if __name__=='__main__':
 
+
+    # ----------------- DNA Encoder -----------------
     dna = "ACGTAGCATCGGATCTATCTATCGACACTTGGTTATCGATCTACGAGCATCTCGTTAGC"
 
     dna_model=DNAEncoder(kmer=4,model_name="zhihan1996/DNABERT-S") #
@@ -84,24 +86,19 @@ if __name__=='__main__':
 
 
     input_ids = inputs["input_ids"]
-    
+    atention_attention_mask = inputs["attention_mask"]
+
     cls_token_id = dna_model.tokenizer.cls_token_id
 
-    hidden_states = dna_model.model(input_ids)
+    hidden_states = dna_model(input_ids, atention_attention_mask)
 
     decode_input = dna_model.tokenizer.decode(input_ids[0])
-    # print(f"Input sequence: {decode_input}")
+    print(f"Input sequence: {decode_input}")
 
-    # print(hidden_states[0].shape)  # (batch_size, sequence_length, hidden_size)
+    print(hidden_states.shape)  # (batch_size, sequence_length, hidden_size)
 
+    # ----------------- Taxa Encoder -----------------
     taxa_model = TaxEncoder()
-    # print(taxa_model.tokenizer.get_vocab())
-
-    text = "Chordata Actinopteri Carangiformes Carangidae"
-
-
-
-    # Set the model to evaluation mode
     taxa_model.model.eval()
 
     # Set the word you want to generate text for
@@ -121,4 +118,7 @@ if __name__=='__main__':
 
     # Print the generated text
     print(generated_text)
+ 
+    
+    
 
