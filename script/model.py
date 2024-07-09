@@ -3,7 +3,12 @@ from transformers import AutoTokenizer, AutoModel
 from transformers.models.bert.configuration_bert import BertConfig
 from itertools import product
 import tokenizer
+import os
+from transformers import GPT2Tokenizer, GPT2LMHeadModel, TextDataset, DataCollatorForLanguageModeling
+from transformers import Trainer, TrainingArguments
+from datasets import load_dataset
 
+print(os.getcwd())
 
 class DNAEncoder(nn.Module):
     """
@@ -36,16 +41,27 @@ class DNAEncoder(nn.Module):
     
 
 class TaxEncoder(nn.Module):
-    def __init__(self, model_name, pretrained):
+    def __init__(self):
         super().__init__()
 
-        if pretrained:
-            self.model = 0
-        else:
-            self.model = 0
-            
-        # for p in self.model.parameters():
-        #     p.requires_grad = trainable
+        
+
+        # Initialize a GPT-2 tokenizer
+        self.tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
+
+        special_tokens = self.tokenizer.special_tokens_map.values()
+
+        new_vocab = {token: i for i, token in enumerate(special_tokens)}
+
+        self.tokenizer.vocab = new_vocab
+        self.tokenizer.encoder = new_vocab
+        self.tokenizer.decoder = {i: token for token, i in new_vocab.items()}
+
+        with open('token_taxa_list.txt') as f:
+            token_list = f.read().splitlines()
+
+        self.tokenizer.add_tokens(token_list)
+        self.tokenizer.add_tokens(' ')
 
         # we are using the CLS token hidden representation as the sentence's embedding
         self.target_token_idx = 0
@@ -72,6 +88,26 @@ if __name__=='__main__':
     hidden_states = dna_model.model(input_ids)
 
     decode_input = dna_model.tokenizer.decode(input_ids[0])
-    print(f"Input sequence: {decode_input}")
+    # print(f"Input sequence: {decode_input}")
 
-    print(hidden_states[0].shape)  # (batch_size, sequence_length, hidden_size)
+    # print(hidden_states[0].shape)  # (batch_size, sequence_length, hidden_size)
+
+    taxa_model = TaxEncoder()
+    # print(taxa_model.tokenizer.get_vocab())
+
+    text = "Chordata Actinopteri Carangiformes Carangidae"
+
+# Tokenize the text
+    tokens = taxa_model.tokenizer.tokenize(text)
+    token_ids = taxa_model.tokenizer.convert_tokens_to_ids(tokens)
+
+    print("Tokens:", tokens)
+    print("Token IDs:", token_ids)
+
+    # Encode and Decode example
+    encoded_input = taxa_model.tokenizer.encode(text)
+    decoded_output = taxa_model.tokenizer.decode(encoded_input)
+
+    print("Encoded Input:", encoded_input)
+    print("Decoded Output:", decoded_output)
+

@@ -87,6 +87,9 @@ class KmerTokenizer(PreTrainedTokenizer):
             return len(cls + token_ids_0 + sep) * [0]
         return len(cls + token_ids_0 + sep + token_ids_1 + sep) * [0]
 
+
+
+
 if __name__ == '__main__':
     k = 3
     tokenizer = KmerTokenizer(k=k)
