@@ -4,7 +4,7 @@ from transformers.models.bert.configuration_bert import BertConfig
 from itertools import product
 import tokenizer
 import os
-from transformers import GPT2Tokenizer, GPT2LMHeadModel, TextDataset, DataCollatorForLanguageModeling
+from transformers import GPT2Tokenizer, GPT2LMHeadModel, GPT2Config
 from transformers import Trainer, TrainingArguments
 from datasets import load_dataset
 
@@ -42,9 +42,8 @@ class DNAEncoder(nn.Module):
 
 class TaxEncoder(nn.Module):
     def __init__(self):
-        super().__init__()
 
-        
+        super().__init__()
 
         # Initialize a GPT-2 tokenizer
         self.tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
@@ -56,12 +55,15 @@ class TaxEncoder(nn.Module):
         self.tokenizer.vocab = new_vocab
         self.tokenizer.encoder = new_vocab
         self.tokenizer.decoder = {i: token for token, i in new_vocab.items()}
-
+        
         with open('token_taxa_list.txt') as f:
             token_list = f.read().splitlines()
 
         self.tokenizer.add_tokens(token_list)
         self.tokenizer.add_tokens(' ')
+
+        # Initialize a GPT-2 model
+        self.model = GPT2LMHeadModel.from_pretrained('TaxaGPT2', config='TaxaGPT2/config.json')
 
         # we are using the CLS token hidden representation as the sentence's embedding
         self.target_token_idx = 0
@@ -97,17 +99,26 @@ if __name__=='__main__':
 
     text = "Chordata Actinopteri Carangiformes Carangidae"
 
-# Tokenize the text
-    tokens = taxa_model.tokenizer.tokenize(text)
-    token_ids = taxa_model.tokenizer.convert_tokens_to_ids(tokens)
 
-    print("Tokens:", tokens)
-    print("Token IDs:", token_ids)
 
-    # Encode and Decode example
-    encoded_input = taxa_model.tokenizer.encode(text)
-    decoded_output = taxa_model.tokenizer.decode(encoded_input)
+    # Set the model to evaluation mode
+    taxa_model.model.eval()
 
-    print("Encoded Input:", encoded_input)
-    print("Decoded Output:", decoded_output)
+    # Set the word you want to generate text for
+    input_word = "Chordata Actinopteri Zeiformes"
+
+    # Tokenize the input word
+    input_ids = taxa_model.tokenizer.encode(input_word, return_tensors="pt")
+
+    # Move the input_ids tensor to the same device as the model
+    input_ids = input_ids.to(taxa_model.model.device)
+
+    # Generate text based on the input word
+    output = taxa_model.model.generate(input_ids, max_length=7, num_return_sequences=1)
+
+    # Decode the generated text
+    generated_text = taxa_model.tokenizer.decode(output[0], skip_special_tokens=True)
+
+    # Print the generated text
+    print(generated_text)
 
