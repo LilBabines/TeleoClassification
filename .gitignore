@@ -165,3 +165,9 @@ model/
 Model/
 Data/
 TaxaGPT2/
+
+my_awesome_model/
+test_custom_tokenizer_kmer_4/
+
+test2/
+*.csv
