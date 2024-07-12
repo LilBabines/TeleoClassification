@@ -14,6 +14,8 @@ class KmerTokenizer(PreTrainedTokenizer):
         }
 
         
+
+        
         self.k = k
 
         if vocab is None:
@@ -25,8 +27,17 @@ class KmerTokenizer(PreTrainedTokenizer):
         self.ids_to_tokens = {v: k for k, v in self.vocab.items()}
 
         super().__init__(**kwargs)
-        
 
+        self.add_special_tokens({'pad_token': '[PAD]'})
+        self.add_special_tokens({'cls_token': '[CLS]'})
+        self.add_special_tokens({'sep_token': '[SEP]'})
+        self.add_special_tokens({'mask_token': '[MASK]'})
+        self.add_special_tokens({'unk_token': '[UNK]'})
+
+        self.vocab_size = self.vocab_size()
+    
+    def vocab_size(self):
+        return len(self.vocab)
     def build_kmer_vocab(self, k):
         nucleotides = ['A', 'C', 'G', 'T']
 
