@@ -57,7 +57,7 @@ plt.show()
 
 plt.figure()
 plt.xlabel('Epoch')
-plt.ylabel('Loss')
+plt.ylabel('F1 score')
 plt.title("Val Performance, FISH Teleo 300 Medium 3 Mer")
 #plt.plot(x_train_loss,y_train_loss,label='Train Loss')
 plt.plot(x_val_loss,y_f1)
