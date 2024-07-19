@@ -3,15 +3,26 @@ import argparse
 import os
 
 data_path = "Data/TeleoSplitGenera_300_medium/"
-tokenizer = "./Model/3-new-12w-0/"
-mode= "./Model/3-new-12w-0/"
-output_path = f"./Model/train_{data_path.split('/')[-2]}_{tokenizer.split('/')[-2]}_{mode.split('/')[-2]}"
+
+
+# https://github.com/jerryji1993/DNABERT?tab=readme-ov-file#32-download-pre-trained-dnabert
+# tokenizer = "./Model/3-new-12w-0/"
+# model= "./Model/3-new-12w-0/"
+
+
+# tokenizer = "zhihan1996/DNABERT-2-117M"
+# model = "zhihan1996/DNABERT-2-117M"
+
+tokenizer = 4
+model = "zhihan1996/DNABERT-2-117M"
+
+output_path = f"./Model/TeleoSplitGenera_300_medium_4mer_DNABERT-2-117M"
 
 output_dir=output_path
 learning_rate=1e-5
 per_device_train_batch_size=16
 per_device_eval_batch_size=16
-num_train_epochs=10
+num_train_epochs=3
 weight_decay=0.01
 eval_strategy="epoch"
 save_strategy="epoch"
@@ -26,11 +37,14 @@ push_to_hub=False
 
 
 
-def train(path, tokenizer, name):
+def train(path, tokenizer, model):
+
+
+
     train, test, val = utils.load_dataset(path)
     tokenizer = utils.load_tokenizer(tokenizer)
     train_dataset, val_dataset, test_dataset, id2label, label2id= utils.encode_data(tokenizer, train, val, test)
-    model = utils.load_model(name,id2label=id2label, label2id=label2id).to("cuda")
+    model = utils.load_model(model,id2label=id2label, label2id=label2id).to("cuda")
     arg_train= utils.training_argument(
         output_path=output_path,
         learning_rate=learning_rate,
@@ -47,12 +61,14 @@ def train(path, tokenizer, name):
     )
     trainer = utils.define_trainer(model, tokenizer, train_dataset, val_dataset, arg_train)
     trainer.train()
-    print(os.listdir(output_dir)[-1])
-    utils.plot_save_loss(os.path.join(output_dir,os.listdir(output_dir)[-1]))
+
+    checkpoints = [os.path.join(output_dir, f) for f in os.listdir(output_dir)] # add path to each file
+    checkpoints.sort(key=lambda x: os.path.getmtime(x))
+    utils.plot_save_loss(checkpoints[-1])
     
 
 if __name__=="__main__":
 
-    train(data_path, tokenizer, mode)
+    train(data_path, tokenizer, model)
 
 
