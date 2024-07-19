@@ -1,35 +1,38 @@
-import utils    
-import argparse
+import utils
 import os
 
-
+# CHOICE DATA PATH :
+#assuming contains train.csv, test.csv, val.csv
 data_path = "Data/TeleoSplitGenera_300_medium/"
 
-
-# https://github.com/jerryji1993/DNABERT?tab=readme-ov-file#32-download-pre-trained-dnabert
-# tokenizer = "./Model/3-new-12w-0/"
-# model= "./Model/3-new-12w-0/"
-
-# https://github.com/MAGICS-LAB/DNABERT_2
-tokenizer = "zhihan1996/DNABERT-2-117M"
-model = "zhihan1996/DNABERT-2-117M"
-
-# tokenizer = 4
-
-# model = "zhihan1996/DNABERT-2-117M"
-# dropout_prob=0.3
+# CHOICE MODEL :
 
 
-# TODO Resize emmbedding
+# model= "./Model/3-new-12w-0/"                 # https://github.com/jerryji1993/DNABERT?tab=readme-ov-file#32-download-pre-trained-dnabert
+model = "zhihan1996/DNABERT-2-117M"             # https://github.com/MAGICS-LAB/DNABERT_2
+#local = True
+# Model/training/my_model/checkpoint-XXXX
 
-output_path = f"./Model/TeleoSplitGenera_300_medium_4mer_DNABERT-2-117M"
 
+# CHOICE TOKENIZER :
 
+tokenizer = "bpe"
+# tokenizer = 4  # custom auguste token, lent attention
+# tokenizer = "./Model/k-new-12w-0/" # tokenizer de DNABert1
+# tokenizer = "zhihan1996/DNABERT-2-117M"
+
+# CHOICE DROPOUT :
+dropout=False # can try, no error, but not verified
+
+# CHOICE OUTPUT PATH :
+output_path = f"./Model/training/TeleoSplitGenera_300_medium_bpe_DNABERT-2-117M"
+
+# CHOICE TRAINING ARGUMENTS :
 output_dir=output_path
 learning_rate=1e-5
 per_device_train_batch_size=16
 per_device_eval_batch_size=16
-num_train_epochs=3
+num_train_epochs=2
 weight_decay=0.01
 eval_strategy="epoch"
 save_strategy="epoch"
@@ -47,7 +50,9 @@ def train(path, tokenizer, model):
     train, test, val = utils.load_dataset(path)
     tokenizer = utils.load_tokenizer(tokenizer)
     train_dataset, val_dataset, test_dataset, id2label, label2id= utils.encode_data(tokenizer, train, val, test)
-    model = utils.load_model(model,id2label=id2label, label2id=label2id,dropout_prob=dropout_prob).to("cuda")
+    
+    model = utils.load_model(model,vocab_size=tokenizer.vocab_size,id2label=id2label, label2id=label2id,dropout=dropout).to("cuda")
+
     arg_train= utils.training_argument(
         output_path=output_path,
         learning_rate=learning_rate,
@@ -72,10 +77,7 @@ def train(path, tokenizer, model):
 
 if __name__=="__main__":
 
-    model = utils.load_model(model,id2label=[0],dropout_prob=0.1).to("cuda")
-    # train(data_path, tokenizer, model)
-
-    trainer.predict(test_dataset)
+    train(data_path, tokenizer, model)
 
 
 

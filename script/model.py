@@ -1,40 +1,30 @@
 from torch import nn
 from transformers import AutoTokenizer, AutoModel
 from transformers.models.bert.configuration_bert import BertConfig
-from itertools import product
 import tokenizer
 import os
-from transformers import GPT2Tokenizer, GPT2LMHeadModel, GPT2Config
-from transformers import Trainer, TrainingArguments
+from transformers import GPT2Tokenizer, GPT2LMHeadModel
+from transformers import AutoModelForSequenceClassification
 from datasets import load_dataset
-import torch
 from torch import nn
+
 
 DIM_emmbedding = 768
 DROPOUT = 0.1
 TEMPERATURE = 0.07
 
-print(os.getcwd())
 
 
-
-from transformers import BertForSequenceClassification, AutoModelForSequenceClassification
-
-class DNABERTWithDropout(BertForSequenceClassification):
-    ''' 
-    A BERT model with an additional dropout layer applied to the input embeddings
-
-    '''
+class DNABERTWithDropout(AutoModelForSequenceClassification):
     def __init__(self, config, dropout_prob=0.3):
-        
         super().__init__(config)
-        self.dropout = nn.Dropout(dropout_prob)
+        self.dropout_input_layer = nn.Dropout(dropout_prob)
     
     def forward(self, input_ids=None, attention_mask=None, token_type_ids=None, position_ids=None, head_mask=None, inputs_embeds=None, labels=None, output_attentions=None, output_hidden_states=None, return_dict=None):
         # Apply dropout to the input embeddings
         if input_ids is not None:
             inputs_embeds = self.bert.embeddings(input_ids=input_ids, position_ids=position_ids, token_type_ids=token_type_ids)
-            inputs_embeds = self.dropout(inputs_embeds)
+            inputs_embeds = self.dropout_input_layer(inputs_embeds)
         
         # Pass the modified embeddings to the original forward method
         return super().forward(
@@ -49,7 +39,7 @@ class DNABERTWithDropout(BertForSequenceClassification):
             output_hidden_states=output_hidden_states,
             return_dict=return_dict
         )
-    
+
 
 class DNAEncoder(nn.Module):
     """
@@ -195,6 +185,7 @@ def cross_entropy(preds, targets, reduction='none'):
         return loss
     elif reduction == "mean":
         return loss.mean()
+
 if __name__=='__main__':
 
 
