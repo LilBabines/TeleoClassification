@@ -1,16 +1,18 @@
 
 from tokenizer import KmerTokenizer
 from model import DNABERTWithDropout
-
 import json
 import os
 
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import logging
+import contextlib
 
 import evaluate
 f1_metric = evaluate.load("f1")
+
 
 from transformers import BertConfig, AutoTokenizer
 from transformers import Trainer, TrainingArguments, DataCollatorWithPadding, AutoModelForSequenceClassification, TrainingArguments, Trainer
@@ -18,7 +20,22 @@ from transformers import Trainer, TrainingArguments, DataCollatorWithPadding, Au
 from sklearn.preprocessing import LabelEncoder
 from datasets import Dataset
 
+from transformers import AutoTokenizer,PreTrainedTokenizerFast
 
+
+
+
+@contextlib.contextmanager
+def suppress_transformers_logging():
+    logger = logging.getLogger("transformers")
+    previous_level = logger.level
+    logger.setLevel(logging.ERROR)
+    try:
+        yield
+    finally:
+        logger.setLevel(previous_level)
+
+    
 def plot_save_loss(result_path):
     '''Plot and save the loss and f1 score from the result_path/trainer_state.json file
     Args:
@@ -99,8 +116,21 @@ def load_tokenizer(name="zhihan1996/DNABERT-2-117M"):
         tokenizer (PreTrainedTokenizerFast): The tokenizer
     '''
     if isinstance(name, str):
-        tokenizer = AutoTokenizer.from_pretrained(name, trust_remote_code=True)
-        
+
+        if name=="bpe":
+
+            tokenizer = PreTrainedTokenizerFast(tokenizer_file="Model/tokenizer/teleo_4096.json")
+
+            tokenizer.add_special_tokens({'pad_token': '[PAD]'})
+            tokenizer.add_special_tokens({'mask_token': '[MASK]'})
+            tokenizer.add_special_tokens({'sep_token': '[SEP]'})
+            tokenizer.add_special_tokens({'cls_token' : '[CLS]'})
+            tokenizer.add_special_tokens({'unk_token' : '[UNK]'})
+
+        else :
+            tokenizer = AutoTokenizer.from_pretrained(name, trust_remote_code=True)
+
+     
     elif isinstance(name, int):
         tokenizer = KmerTokenizer(name)
 
@@ -155,27 +185,44 @@ def encode_data(tokenizer, train, val, test):
     })
     id2label = {i: label for i, label in enumerate(label_encoder.classes_)}
     label2id = {label: i for i, label in enumerate(label_encoder.classes_)}
+
+    print(len(id2label))
     return train_dataset, val_dataset, test_dataset, id2label, label2id
 
-def load_model(name="zhihan1996/DNABERT-2-117M",local=False, id2label=None, label2id=None,dropout_prob=0):
+def load_model(name, vocab_size, local=False, id2label=None, label2id=None,dropout=False):
 
     # model_path_save=r"C:\Users\Auguste Verdier\Desktop\ADNe\BouillaClip\Model\genera_300_medium_3_mer\checkpoint-85335"
     if local:
         assert os.path.exists(name), "The model path does not exist at the specified location, but local flag is set to True"
+        assert os.path.exists(os.path.join(name,"config.json")), "The model path does not contain a config.json file"
         config_path = os.path.join(name,"config.json")
     else :
         config_path = name
         
     config = BertConfig.from_pretrained(config_path, 
                                         num_labels=len(id2label), 
-                                        max_position_embeddings=510,
+                                        max_position_embeddings=514,
                                         id2label=id2label,
                                         label2id=label2id)
-    if dropout_prob:
-        model = DNABERTWithDropout.from_pretrained(name, trust_remote_code=True, ignore_mismatched_sizes=True, config=config, dropout_prob=dropout_prob)
+
+    if dropout:
+
+        with suppress_transformers_logging():
+            model = AutoModelForSequenceClassification.from_pretrained(name, trust_remote_code=True, ignore_mismatched_sizes=True, config=config)
+
+        model = DNABERTWithDropout.from_pretrained(
+            "zhihan1996/DNABERT-2-117M", 
+            trust_remote_code=True, 
+            ignore_mismatched_sizes=True, 
+            config=config
+        )
+
     else:
         model = AutoModelForSequenceClassification.from_pretrained(name, trust_remote_code=True, ignore_mismatched_sizes=True, config=config)
 
+    model.id2label = id2label
+    model.label2id = label2id
+    model.resize_token_embeddings(vocab_size)
     return model
 
 def compute_metrics(eval_pred):
@@ -226,3 +273,17 @@ def define_trainer(model, tokenizer, train_dataset, val_dataset, training_args):
     return trainer
 
 
+if __name__=="__main__":
+
+
+    
+    config = BertConfig.from_pretrained("zhihan1996/DNABERT-2-117M", 
+                                        num_labels=100, 
+                                        max_position_embeddings=510)
+                        
+    
+    
+    
+        # model = BertForSequenceClassificationDropOut.from_pretrained(name, trust_remote_code=True, config=config)
+   
+    model = BertForSequenceClassification.from_pretrained("zhihan1996/DNABERT-2-117M", trust_remote_code=True, ignore_mismatched_sizes=True, config=config)
