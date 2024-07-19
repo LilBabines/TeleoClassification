@@ -90,7 +90,6 @@ def plot_save_loss(result_path):
     #plt.plot(x_train_loss,y_train_loss,label='Train Loss')
     plt.plot(x_val_loss,y_f1)
     plt.grid(True)
-    plt.legend()
     plt.savefig(f'{result_path}/PERF.png')
     plt.savefig(f'Images/PERF_{result_path.split("/")[-1]}.png')
     plt.show()
