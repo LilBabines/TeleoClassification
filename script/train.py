@@ -2,6 +2,7 @@ import utils
 import argparse
 import os
 
+
 data_path = "Data/TeleoSplitGenera_300_medium/"
 
 
@@ -10,15 +11,19 @@ data_path = "Data/TeleoSplitGenera_300_medium/"
 # model= "./Model/3-new-12w-0/"
 
 # https://github.com/MAGICS-LAB/DNABERT_2
-# tokenizer = "zhihan1996/DNABERT-2-117M"
-# model = "zhihan1996/DNABERT-2-117M"
-
-tokenizer = 4
-
+tokenizer = "zhihan1996/DNABERT-2-117M"
 model = "zhihan1996/DNABERT-2-117M"
-dropout_prob=0.3
+
+# tokenizer = 4
+
+# model = "zhihan1996/DNABERT-2-117M"
+# dropout_prob=0.3
+
+
+# TODO Resize emmbedding
 
 output_path = f"./Model/TeleoSplitGenera_300_medium_4mer_DNABERT-2-117M"
+
 
 output_dir=output_path
 learning_rate=1e-5
@@ -32,10 +37,6 @@ load_best_model_at_end=True
 metric_for_best_model="f1"
 greater_is_better=True
 push_to_hub=False
-
-
-
-
 
 
 
@@ -71,6 +72,11 @@ def train(path, tokenizer, model):
 
 if __name__=="__main__":
 
-    train(data_path, tokenizer, model)
+    model = utils.load_model(model,id2label=[0],dropout_prob=0.1).to("cuda")
+    # train(data_path, tokenizer, model)
+
+    trainer.predict(test_dataset)
 
 
+
+    
