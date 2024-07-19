@@ -1,5 +1,7 @@
 import utils
 import os
+#TODO : check model w/o dropout has some bert part...........
+
 
 # CHOICE DATA PATH :
 #assuming contains train.csv, test.csv, val.csv
@@ -16,10 +18,13 @@ model = "zhihan1996/DNABERT-2-117M"             # https://github.com/MAGICS-LAB/
 
 # CHOICE TOKENIZER :
 
-tokenizer = "bpe"
+# tokenizer = "bpe"
 # tokenizer = 4  # custom auguste token, lent attention
-# tokenizer = "./Model/k-new-12w-0/" # tokenizer de DNABert1
+tokenizer = "./Model/pre_trained/4-new-12w-0/" # tokenizer de DNABert1
 # tokenizer = "zhihan1996/DNABERT-2-117M"
+
+#CHOICE AUGMENTATION DYNAMIC :
+dynamic_augmentation=False # becareful very slow ~X4 time
 
 # CHOICE DROPOUT :
 dropout=False # can try, no error, but not verified
@@ -49,7 +54,7 @@ def train(path, tokenizer, model):
 
     train, test, val = utils.load_dataset(path)
     tokenizer = utils.load_tokenizer(tokenizer)
-    train_dataset, val_dataset, test_dataset, id2label, label2id= utils.encode_data(tokenizer, train, val, test)
+    train_dataset, val_dataset, test_dataset, id2label, label2id= utils.encode_data(tokenizer, train, val, test,dynamic_augmentation=dynamic_augmentation)
     
     model = utils.load_model(model,vocab_size=tokenizer.vocab_size,id2label=id2label, label2id=label2id,dropout=dropout).to("cuda")
 
@@ -76,9 +81,21 @@ def train(path, tokenizer, model):
     
 
 if __name__=="__main__":
+    # pass
+    # train(data_path, tokenizer, model)
 
-    train(data_path, tokenizer, model)
+    adn= "AAAAAAATTTCGGAATTCCGGGAAATTTCCGGAAATTCCGGGAATTTCCGGAATTTCGGAATTGGCTTAAGGCCTTAGGCCT"
+    tokenizer1= utils.load_tokenizer("bpe")
+    tokenizer2= utils.load_tokenizer(4)
 
-
+    token1= tokenizer1(adn)
+    token2= tokenizer2(adn)
+    
+    decode1= tokenizer1.decode(token1["input_ids"])
+    decode2= tokenizer2.decode(token2["input_ids"])
+    print(decode1)
+    print(decode2)
 
     
+
+

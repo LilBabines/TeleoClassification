@@ -100,14 +100,3 @@ class KmerTokenizer(PreTrainedTokenizer):
 
 
 
-
-if __name__ == '__main__':
-    k = 3
-    tokenizer = KmerTokenizer(k=k)
-    sequence = "ATCGGCTA"
-    tokens = tokenizer.tokenize(sequence)
-    token_ids = tokenizer.convert_tokens_to_ids(tokens)
-    print("Tokens:", tokens)
-    print("Token IDs:", token_ids)
-    save_directory = './'
-    print(tokenizer.get_vocab())

@@ -1,6 +1,7 @@
 
 from tokenizer import KmerTokenizer
 from model import DNABERTWithDropout
+from dataset import AugmentedDataset
 import json
 import os
 
@@ -138,7 +139,7 @@ def load_tokenizer(name="zhihan1996/DNABERT-2-117M"):
        
     return tokenizer
 
-def encode_data(tokenizer, train, val, test):
+def encode_data(tokenizer, train, val, test, dynamic_augmentation=False):
     '''Encode the data using the tokenizer
     Args:
         tokenizer (PreTrainedTokenizerFast): The tokenizer
@@ -152,7 +153,9 @@ def encode_data(tokenizer, train, val, test):
         id2label (dict): The id to label mapping
         label2id (dict): The label to id mapping
     '''
-    train_encodings = tokenizer(train['sequence'].tolist(), truncation=True, max_length=512)
+    if not dynamic_augmentation:
+
+        train_encodings = tokenizer(train['sequence'].tolist(), truncation=True, max_length=512)
     val_encodings = tokenizer(val['sequence'].tolist(), truncation=True, max_length=512)
     test_encodings = tokenizer(test['sequence'].tolist(), truncation=True, max_length=512)
 
@@ -166,12 +169,21 @@ def encode_data(tokenizer, train, val, test):
     train_labels = label_encoder.transform(train['family'])
     val_labels = label_encoder.transform(val['family'])
     test_labels = label_encoder.transform(test['family'])
+    
+    if dynamic_augmentation:
 
-    train_dataset = Dataset.from_dict({
-    'input_ids': train_encodings['input_ids'],
-    'attention_mask': train_encodings['attention_mask'],
-    'labels': train_labels
-    })
+        train_dataset = AugmentedDataset(
+            train['sequence'].tolist(),
+            train_labels,
+            tokenizer
+        )
+    else:
+        train_dataset = Dataset.from_dict({
+            'input_ids': train_encodings['input_ids'],
+            'attention_mask': train_encodings['attention_mask'],
+            'labels': train_labels
+        })
+    
 
     val_dataset = Dataset.from_dict({
         'input_ids': val_encodings['input_ids'],
@@ -187,7 +199,6 @@ def encode_data(tokenizer, train, val, test):
     id2label = {i: label for i, label in enumerate(label_encoder.classes_)}
     label2id = {label: i for i, label in enumerate(label_encoder.classes_)}
 
-    print(len(id2label))
     return train_dataset, val_dataset, test_dataset, id2label, label2id
 
 def load_model(name, vocab_size, local=False, id2label=None, label2id=None,dropout=False):
@@ -270,6 +281,8 @@ def define_trainer(model, tokenizer, train_dataset, val_dataset, training_args):
         data_collator=data_collator,
         compute_metrics=compute_metrics
     )
+
+
 
     return trainer
 
