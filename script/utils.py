@@ -78,7 +78,8 @@ def plot_save_loss(result_path):
     plt.plot(x_val_loss,y_val_loss,label='Val Loss')
     plt.grid(True)
     plt.legend()
-    plt.savefig(f'{result_path}/train_val_loss.png')
+    plt.savefig(f'Images/LOSS_{result_path.split("/")[-1]}.png')
+    plt.savefig(f'{result_path}/LOSS.png')
     plt.show()
 
 
@@ -90,7 +91,8 @@ def plot_save_loss(result_path):
     plt.plot(x_val_loss,y_f1)
     plt.grid(True)
     plt.legend()
-    plt.savefig(f'{result_path}/val_performance.png')
+    plt.savefig(f'{result_path}/PERF.png')
+    plt.savefig(f'Images/PERF_{result_path.split("/")[-1]}.png')
     plt.show()
 
 def load_dataset(path="Data/TeleoSplit/"):
