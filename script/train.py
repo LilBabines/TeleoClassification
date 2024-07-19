@@ -1,6 +1,10 @@
 import utils
 import os
+
 #TODO : check model w/o dropout has some bert part...........
+#TODO : check dynamic augmentation speed with different tokenizer
+#TODO : check why training time during depend on the tokenizer
+
 
 
 # CHOICE DATA PATH :
