@@ -273,17 +273,3 @@ def define_trainer(model, tokenizer, train_dataset, val_dataset, training_args):
     return trainer
 
 
-if __name__=="__main__":
-
-
-    
-    config = BertConfig.from_pretrained("zhihan1996/DNABERT-2-117M", 
-                                        num_labels=100, 
-                                        max_position_embeddings=510)
-                        
-    
-    
-    
-        # model = BertForSequenceClassificationDropOut.from_pretrained(name, trust_remote_code=True, config=config)
-   
-    model = BertForSequenceClassification.from_pretrained("zhihan1996/DNABERT-2-117M", trust_remote_code=True, ignore_mismatched_sizes=True, config=config)
