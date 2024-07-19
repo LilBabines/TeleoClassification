@@ -9,12 +9,14 @@ data_path = "Data/TeleoSplitGenera_300_medium/"
 # tokenizer = "./Model/3-new-12w-0/"
 # model= "./Model/3-new-12w-0/"
 
-
+# https://github.com/MAGICS-LAB/DNABERT_2
 # tokenizer = "zhihan1996/DNABERT-2-117M"
 # model = "zhihan1996/DNABERT-2-117M"
 
 tokenizer = 4
+
 model = "zhihan1996/DNABERT-2-117M"
+dropout_prob=0.3
 
 output_path = f"./Model/TeleoSplitGenera_300_medium_4mer_DNABERT-2-117M"
 
@@ -44,7 +46,7 @@ def train(path, tokenizer, model):
     train, test, val = utils.load_dataset(path)
     tokenizer = utils.load_tokenizer(tokenizer)
     train_dataset, val_dataset, test_dataset, id2label, label2id= utils.encode_data(tokenizer, train, val, test)
-    model = utils.load_model(model,id2label=id2label, label2id=label2id).to("cuda")
+    model = utils.load_model(model,id2label=id2label, label2id=label2id,dropout_prob=dropout_prob).to("cuda")
     arg_train= utils.training_argument(
         output_path=output_path,
         learning_rate=learning_rate,

@@ -16,6 +16,41 @@ TEMPERATURE = 0.07
 
 print(os.getcwd())
 
+
+
+from transformers import BertForSequenceClassification, AutoModelForSequenceClassification
+
+class DNABERTWithDropout(BertForSequenceClassification):
+    ''' 
+    A BERT model with an additional dropout layer applied to the input embeddings
+
+    '''
+    def __init__(self, config, dropout_prob=0.3):
+        
+        super().__init__(config)
+        self.dropout = nn.Dropout(dropout_prob)
+    
+    def forward(self, input_ids=None, attention_mask=None, token_type_ids=None, position_ids=None, head_mask=None, inputs_embeds=None, labels=None, output_attentions=None, output_hidden_states=None, return_dict=None):
+        # Apply dropout to the input embeddings
+        if input_ids is not None:
+            inputs_embeds = self.bert.embeddings(input_ids=input_ids, position_ids=position_ids, token_type_ids=token_type_ids)
+            inputs_embeds = self.dropout(inputs_embeds)
+        
+        # Pass the modified embeddings to the original forward method
+        return super().forward(
+            input_ids=None,
+            attention_mask=attention_mask,
+            token_type_ids=token_type_ids,
+            position_ids=position_ids,
+            head_mask=head_mask,
+            inputs_embeds=inputs_embeds,
+            labels=labels,
+            output_attentions=output_attentions,
+            output_hidden_states=output_hidden_states,
+            return_dict=return_dict
+        )
+    
+
 class DNAEncoder(nn.Module):
     """
     Encode images to a fixed size vector

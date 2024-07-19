@@ -1,5 +1,6 @@
 
 from tokenizer import KmerTokenizer
+from model import DNABERTWithDropout
 
 import json
 import os
@@ -156,17 +157,25 @@ def encode_data(tokenizer, train, val, test):
     label2id = {label: i for i, label in enumerate(label_encoder.classes_)}
     return train_dataset, val_dataset, test_dataset, id2label, label2id
 
-def load_model(name="zhihan1996/DNABERT-2-117M",local=False, id2label=None, label2id=None):
+def load_model(name="zhihan1996/DNABERT-2-117M",local=False, id2label=None, label2id=None,dropout_prob=0):
 
-    model_path_save=r"C:\Users\Auguste Verdier\Desktop\ADNe\BouillaClip\Model\genera_300_medium_3_mer\checkpoint-85335"
-    config = BertConfig.from_pretrained(os.path.join(model_path_save,"config.json"), 
+    # model_path_save=r"C:\Users\Auguste Verdier\Desktop\ADNe\BouillaClip\Model\genera_300_medium_3_mer\checkpoint-85335"
+    if local:
+        assert os.path.exists(name), "The model path does not exist at the specified location, but local flag is set to True"
+        config_path = os.path.join(name,"config.json")
+    else :
+        config_path = name
+        
+    config = BertConfig.from_pretrained(config_path, 
                                         num_labels=len(id2label), 
                                         max_position_embeddings=510,
                                         id2label=id2label,
-                                        label2id=label2id
-    )
+                                        label2id=label2id)
+    if dropout_prob:
+        model = DNABERTWithDropout.from_pretrained(name, trust_remote_code=True, ignore_mismatched_sizes=True, config=config, dropout_prob=dropout_prob)
+    else:
+        model = AutoModelForSequenceClassification.from_pretrained(name, trust_remote_code=True, ignore_mismatched_sizes=True, config=config)
 
-    model = AutoModelForSequenceClassification.from_pretrained(model_path_save, trust_remote_code=True, ignore_mismatched_sizes=True, config=config)
     return model
 
 def compute_metrics(eval_pred):
