@@ -1,12 +1,12 @@
 from torch import nn
 
+import os
 from transformers.modeling_outputs import SequenceClassifierOutput
-from transformers import AutoModel, BertPreTrainedModel, AutoModel, BertConfig
+from transformers import AutoModel, AutoModel, BertConfig
 
 from transformers import AutoModelForSequenceClassification
 from datasets import load_dataset
 
-from typing import Tuple
 
 
 
@@ -115,6 +115,41 @@ class DNABERTWithDropout(AutoModelForSequenceClassification):
         )
 
 
+
+
+def load_model(name, vocab_size, local=False, id2label=None, label2id=None,dropout=False):
+
+    # model_path_save=r"C:\Users\Auguste Verdier\Desktop\ADNe\BouillaClip\Model\genera_300_medium_3_mer\checkpoint-85335"
+    if local:
+        assert os.path.exists(name), "The model path does not exist at the specified location, but local flag is set to True"
+        assert os.path.exists(os.path.join(name,"config.json")), "The model path does not contain a config.json file"
+        config_path = os.path.join(name,"config.json")
+    else :
+        config_path = name
+        
+    config = BertConfig.from_pretrained(config_path, 
+                                        num_labels=len(id2label), 
+                                        max_position_embeddings=514,
+                                        id2label=id2label,
+                                        label2id=label2id)
+
+    if dropout:
+
+        
+        model = DNABERTWithDropout.from_pretrained(
+            "zhihan1996/DNABERT-2-117M", 
+            trust_remote_code=True, 
+            ignore_mismatched_sizes=True, 
+            config=config
+        )
+
+    else:
+        model = AutoModelForSequenceClassification.from_pretrained(name, trust_remote_code=True, ignore_mismatched_sizes=True, config=config)
+
+    model.id2label = id2label
+    model.label2id = label2id
+    model.resize_token_embeddings(vocab_size)
+    return model
 
 if __name__=='__main__':
 

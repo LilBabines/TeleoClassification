@@ -2,7 +2,7 @@ import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 import utils
 
-from model import BertForSequenceMultiTaxaClassification as MultiTaxa
+from models.model import BertForSequenceMultiTaxaClassification as MultiTaxa
 from transformers import AutoModel,BertConfig
 
 

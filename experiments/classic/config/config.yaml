@@ -1,0 +1,19 @@
+hydra:
+  run:
+    dir: outputs/${hydra.job.name}/${now:%Y-%m-%d_%H-%M-%S}
+
+data:
+  dataset_path: "data/TeleoSplitGenera_300_medium"
+
+task:
+  task: "multitaxa"
+  taxa_classes : ["order", "family"]
+
+trainer:
+  accelerator: "gpu"
+  devices: 1
+  max_epochs: 10
+
+model:
+  model_name: "zhihan1996/DNABERT-2-117M"
+  

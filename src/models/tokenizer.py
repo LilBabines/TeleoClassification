@@ -1,6 +1,8 @@
-from transformers import PreTrainedTokenizer
+from transformers import AutoTokenizer,PreTrainedTokenizerFast,PreTrainedTokenizer
 from itertools import product
 import json
+
+
 
 class KmerTokenizer(PreTrainedTokenizer):
     def __init__(self, k,vocab=None, **kwargs):
@@ -97,6 +99,37 @@ class KmerTokenizer(PreTrainedTokenizer):
         if token_ids_1 is None:
             return len(cls + token_ids_0 + sep) * [0]
         return len(cls + token_ids_0 + sep + token_ids_1 + sep) * [0]
+    
+
+   
+def load_tokenizer(name="zhihan1996/DNABERT-2-117M"):
+    '''Load the tokenizer from the model name or the kmer size
+    Args:
+        name (str or int): The model name or the kmer size
+    Returns:
+        tokenizer (PreTrainedTokenizerFast): The tokenizer
+    '''
+    if isinstance(name, str):
+
+        if name=="bpe":
+
+            tokenizer = PreTrainedTokenizerFast(tokenizer_file="Model/tokenizer/teleo_4096.json")
+
+            tokenizer.add_special_tokens({'pad_token': '[PAD]'})
+            tokenizer.add_special_tokens({'mask_token': '[MASK]'})
+            tokenizer.add_special_tokens({'sep_token': '[SEP]'})
+            tokenizer.add_special_tokens({'cls_token' : '[CLS]'})
+            tokenizer.add_special_tokens({'unk_token' : '[UNK]'})
+
+        else :
+            tokenizer = AutoTokenizer.from_pretrained(name, trust_remote_code=True)
+
+     
+    elif isinstance(name, int):
+        tokenizer = KmerTokenizer(name)
+
+       
+    return tokenizer 
 
 
 
