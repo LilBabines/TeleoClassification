@@ -1,5 +1,10 @@
-import utils
 import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+import utils
+
+from model import BertForSequenceMultiTaxaClassification as MultiTaxa
+from transformers import AutoModel,BertConfig
+
 
 #TODO : check model w/o dropout has some bert part...........
 #TODO : check dynamic augmentation speed with different tokenizer
@@ -82,24 +87,51 @@ def train(path, tokenizer, model):
     checkpoints = [os.path.join(output_dir, f) for f in os.listdir(output_dir)] # add path to each file
     checkpoints.sort(key=lambda x: os.path.getmtime(x))
     utils.plot_save_loss(checkpoints[-1])
+
+def test_multiTaxa(path, tokenizer, model):
+
+    train, test, val = utils.load_dataset(path)
+    tokenizer = utils.load_tokenizer(tokenizer)
+    train_dataset, val_dataset, test_dataset, id2label_order, label2id_order, id2label_family, label2id_family= utils.encode_multiTaxa_data(tokenizer, train, val, test,dynamic_augmentation=dynamic_augmentation)
+    print(len(id2label_order))
+    print(len(id2label_family))
+    num_order_labels = 78
+    num_family_labels = 370
+
     
+    # config = BertConfig.from_pretrained("zhihan1996/DNABERT-2-117M",
+    #                                 trust_remote_code=True
+    # )
+#     config = BertConfig.from_pretrained("zhihan1996/DNABERT-2-117M",
+#                                     max_position_embeddings=514
+# )
+
+#     model = AutoModel.from_pretrained("zhihan1996/DNABERT-2-117M", trust_remote_code=True, ignore_mismatched_sizes=True, config=config)
+
+
+    # # Initialize the custom model
+    model_multiTaxa = MultiTaxa( 
+        "zhihan1996/DNABERT-2-117M"
+    )
 
 if __name__=="__main__":
     # pass
     # train(data_path, tokenizer, model)
 
-    adn= "AAAAAAATTTCGGAATTCCGGGAAATTTCCGGAAATTCCGGGAATTTCCGGAATTTCGGAATTGGCTTAAGGCCTTAGGCCT"
-    tokenizer1= utils.load_tokenizer("bpe")
-    tokenizer2= utils.load_tokenizer(4)
+    # adn= "AAAAAAATTTCGGAATTCCGGGAAATTTCCGGAAATTCCGGGAATTTCCGGAATTTCGGAATTGGCTTAAGGCCTTAGGCCT"
+    # tokenizer1= utils.load_tokenizer("bpe")
+    # tokenizer2= utils.load_tokenizer(4)
 
-    token1= tokenizer1(adn)
-    token2= tokenizer2(adn)
+    # token1= tokenizer1(adn)
+    # token2= tokenizer2(adn)
     
-    decode1= tokenizer1.decode(token1["input_ids"])
-    decode2= tokenizer2.decode(token2["input_ids"])
-    print(decode1)
-    print(decode2)
+    # decode1= tokenizer1.decode(token1["input_ids"])
+    # decode2= tokenizer2.decode(token2["input_ids"])
+    # print(decode1)
+    # print(decode2)
 
+
+    test_multiTaxa(data_path, tokenizer, model)
     
 
 

@@ -35,3 +35,20 @@ class AugmentedDataset(Dataset):
         return item
     
 
+class MultiTaxaDataset(Dataset):
+    def __init__(self, sequences, labels, tokenizer):
+        self.sequences = sequences
+        self.labels = labels
+        self.tokenizer = tokenizer
+
+        
+    def __len__(self):
+        return len(self.sequences)
+    
+    def __getitem__(self, idx):
+        sequence = self.sequences[idx]
+        label = self.labels[idx]
+        encodings = self.tokenizer(sequence, truncation=True, max_length=512, padding='max_length', return_tensors='pt')
+        item = {key: val.squeeze() for key, val in encodings.items()}
+        item['labels'] = label
+        return item

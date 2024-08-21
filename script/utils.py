@@ -138,6 +138,81 @@ def load_tokenizer(name="zhihan1996/DNABERT-2-117M"):
 
        
     return tokenizer
+def encode_multiTaxa_data(tokenizer, train, val, test, dynamic_augmentation=False):
+    '''Encode the data using the tokenizer for multi-label classification.
+    Args:
+        tokenizer (PreTrainedTokenizerFast): The tokenizer
+        train (pd.DataFrame): The training dataset
+        val (pd.DataFrame): The validation dataset
+        test (pd.DataFrame): The testing dataset
+    Returns:
+        train_dataset (Dataset): The training dataset
+        val_dataset (Dataset): The validation dataset
+        test_dataset (Dataset): The testing dataset
+        id2label_order (dict): The id to order label mapping
+        label2id_order (dict): The order label to id mapping
+        id2label_family (dict): The id to family label mapping
+        label2id_family (dict): The family label to id mapping
+    '''
+
+    # Tokenize the sequences
+    train_encodings = tokenizer(train['sequence'].tolist(), truncation=True, max_length=512)
+    val_encodings = tokenizer(val['sequence'].tolist(), truncation=True, max_length=512)
+    test_encodings = tokenizer(test['sequence'].tolist(), truncation=True, max_length=512)
+
+    # Initialize the label encoders
+    order_encoder = LabelEncoder()
+    family_encoder = LabelEncoder()
+
+    # Fit the label encoders on the combined data
+    order_encoder.fit(pd.concat([train['order'], val['order'], test['order']]))
+    family_encoder.fit(pd.concat([train['family'], val['family'], test['family']]))
+
+    # Encode the labels
+    train_order_labels = order_encoder.transform(train['order'])
+    val_order_labels = order_encoder.transform(val['order'])
+    test_order_labels = order_encoder.transform(test['order'])
+
+    train_family_labels = family_encoder.transform(train['family'])
+    val_family_labels = family_encoder.transform(val['family'])
+    test_family_labels = family_encoder.transform(test['family'])
+
+    # If dynamic augmentation is enabled, apply custom dataset logic
+    if dynamic_augmentation:
+        train_dataset = AugmentedDataset(
+            train['sequence'].tolist(),
+            {'order': train_order_labels, 'family': train_family_labels},
+            tokenizer
+        )
+    else:
+        train_dataset = Dataset.from_dict({
+            'input_ids': train_encodings['input_ids'],
+            'attention_mask': train_encodings['attention_mask'],
+            'order_labels': train_order_labels,
+            'family_labels': train_family_labels
+        })
+
+    val_dataset = Dataset.from_dict({
+        'input_ids': val_encodings['input_ids'],
+        'attention_mask': val_encodings['attention_mask'],
+        'order_labels': val_order_labels,
+        'family_labels': val_family_labels
+    })
+
+    test_dataset = Dataset.from_dict({
+        'input_ids': test_encodings['input_ids'],
+        'attention_mask': test_encodings['attention_mask'],
+        'order_labels': test_order_labels,
+        'family_labels': test_family_labels
+    })
+
+    # Create id-to-label and label-to-id mappings
+    id2label_order = {i: label for i, label in enumerate(order_encoder.classes_)}
+    label2id_order = {label: i for i, label in enumerate(order_encoder.classes_)}
+    id2label_family = {i: label for i, label in enumerate(family_encoder.classes_)}
+    label2id_family = {label: i for i, label in enumerate(family_encoder.classes_)}
+
+    return train_dataset, val_dataset, test_dataset, id2label_order, label2id_order, id2label_family, label2id_family
 
 def encode_data(tokenizer, train, val, test, dynamic_augmentation=False):
     '''Encode the data using the tokenizer
@@ -269,6 +344,7 @@ def training_argument(output_path, learning_rate=1e-5, per_device_train_batch_si
     return arg
 
 def define_trainer(model, tokenizer, train_dataset, val_dataset, training_args):
+
     data_collator = DataCollatorWithPadding(tokenizer=tokenizer)
 
     
