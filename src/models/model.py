@@ -10,9 +10,9 @@ from datasets import load_dataset
 
 
 
-class BertForSequenceMultiTaxaClassification(nn.Module):
-    def __init__(self, model_name_or_path, num_labels_order = 72, num_labels_family = 303  ):
-        super(BertForSequenceMultiTaxaClassification, self).__init__()
+class MultiTaxaClassification(nn.Module):
+    def __init__(self, num_labels_order = 72, num_labels_family = 303  ):
+        super(MultiTaxaClassification,self).__init__()
         
         self.num_labels = (num_labels_order, num_labels_family)
         
@@ -21,7 +21,7 @@ class BertForSequenceMultiTaxaClassification(nn.Module):
         config = BertConfig.from_pretrained("zhihan1996/DNABERT-2-117M",
                                     max_position_embeddings=514
         )
-        self.model = AutoModel.from_pretrained(model_name_or_path, trust_remote_code=True,config=config)
+        self.model = AutoModel.from_pretrained("zhihan1996/DNABERT-2-117M", trust_remote_code=True,config=config)
         hidden_size = self.model.config.hidden_size
         classifier_dropout = 0.1
 
@@ -39,14 +39,13 @@ class BertForSequenceMultiTaxaClassification(nn.Module):
         position_ids=None,
         head_mask=None,
         inputs_embeds=None,
-        labels_order=None,
-        labels_family=None,
-        output_attentions=None,
-        output_hidden_states=None,
-        return_dict=None,
+        labels=None,
+        output_attentions=True,
+        output_hidden_states=True,
+        return_dict=True,
     ):
         
-        return_dict = return_dict if return_dict is not None else self.config.use_return_dict
+        
 
         outputs = self.model(
             input_ids,
@@ -55,37 +54,39 @@ class BertForSequenceMultiTaxaClassification(nn.Module):
             position_ids=position_ids,
             head_mask=head_mask,
             inputs_embeds=inputs_embeds,
-            output_attentions=output_attentions,
-            output_hidden_states=output_hidden_states,
-            return_dict=return_dict,
-        )
-
-        pooled_output = outputs[1]
+            )
+        
+        
+        # Use the [CLS] token's output (first token of the sequence)
+        pooled_output = outputs[0][:, 0, :]  # Shape: [batch_size, hidden_size]
 
         pooled_output = self.dropout(pooled_output)
         
         logits_order = self.classifier_order(pooled_output)
         logits_family = self.classifier_family(pooled_output)
         logits = (logits_order, logits_family)
-
+        
+        
         loss = None
-        if labels_order is not None and labels_family is not None:
-            
+        
+        if labels is not None:
+            labels_order, labels_family = labels[:,0], labels[:,1]
+
             loss_fct = nn.CrossEntropyLoss()
             loss_order = loss_fct(logits_order, labels_order)
             loss_family = loss_fct(logits_family, labels_family)
             loss = loss_order + loss_family
-            outputs = (loss,) + outputs
-
+     
         if not return_dict:
             output = (logits,) + outputs[2:]
             return ((loss,) + output) if loss is not None else output
-
+        
+        # return {"loss":loss, "logits":logits}
         return SequenceClassifierOutput(
             loss=loss,
             logits=logits,
-            hidden_states=outputs.hidden_states,
-            attentions=outputs.attentions,
+            # hidden_states=outputs.hidden_states,
+            # attentions=outputs.attentions,
         )
 
 
@@ -117,7 +118,7 @@ class DNABERTWithDropout(AutoModelForSequenceClassification):
 
 
 
-def load_model(name, vocab_size, local=False, id2label=None, label2id=None,dropout=False):
+def load_bert_model(name, vocab_size, local=False, id2label=None, label2id=None):
 
     # model_path_save=r"C:\Users\Auguste Verdier\Desktop\ADNe\BouillaClip\Model\genera_300_medium_3_mer\checkpoint-85335"
     if local:
@@ -133,18 +134,11 @@ def load_model(name, vocab_size, local=False, id2label=None, label2id=None,dropo
                                         id2label=id2label,
                                         label2id=label2id)
 
-    if dropout:
+    
 
-        
-        model = DNABERTWithDropout.from_pretrained(
-            "zhihan1996/DNABERT-2-117M", 
-            trust_remote_code=True, 
-            ignore_mismatched_sizes=True, 
-            config=config
-        )
 
-    else:
-        model = AutoModelForSequenceClassification.from_pretrained(name, trust_remote_code=True, ignore_mismatched_sizes=True, config=config)
+   
+    model = AutoModelForSequenceClassification.from_pretrained(name, trust_remote_code=True, ignore_mismatched_sizes=True, config=config)
 
     model.id2label = id2label
     model.label2id = label2id

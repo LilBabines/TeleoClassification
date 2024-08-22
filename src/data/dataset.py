@@ -1,7 +1,7 @@
 
 import numpy as np
 import pandas as pd
-from torch.utils.data import Dataset
+from datasets import Dataset
 from sklearn.preprocessing import LabelEncoder
 
 
@@ -19,7 +19,7 @@ def mutation(seq, mutation_ratio_min=LOW_NUC, mutation_ration_max=HIGHT_NUC, mut
 
 
 
-def load_data(path="Data/TeleoSplit/"):
+def load_data(path="Data/TeleoSplitGenera_300_medium/"):
     '''Load the dataset from the path/train.csv, path/test.csv, and path/val.csv
     Args:
         path (str): The path to the dataset
@@ -76,6 +76,9 @@ def encode_multiTaxa_dataset(tokenizer, train, val, test, dynamic_augmentation=F
     val_encodings = tokenizer(val['sequence'].tolist(), truncation=True, max_length=512)
     test_encodings = tokenizer(test['sequence'].tolist(), truncation=True, max_length=512)
 
+
+
+
     # Initialize the label encoders
     order_encoder = LabelEncoder()
     family_encoder = LabelEncoder()
@@ -83,43 +86,44 @@ def encode_multiTaxa_dataset(tokenizer, train, val, test, dynamic_augmentation=F
     # Fit the label encoders on the combined data
     order_encoder.fit(pd.concat([train['order'], val['order'], test['order']]))
     family_encoder.fit(pd.concat([train['family'], val['family'], test['family']]))
-
+    
     # Encode the labels
     train_order_labels = order_encoder.transform(train['order'])
     val_order_labels = order_encoder.transform(val['order'])
     test_order_labels = order_encoder.transform(test['order'])
+
+    
 
     train_family_labels = family_encoder.transform(train['family'])
     val_family_labels = family_encoder.transform(val['family'])
     test_family_labels = family_encoder.transform(test['family'])
 
     # If dynamic augmentation is enabled, apply custom dataset logic
-    if dynamic_augmentation:
-        train_dataset = AugmentedDataset(
-            train['sequence'].tolist(),
-            {'order': train_order_labels, 'family': train_family_labels},
-            tokenizer
-        )
+    if False : #dynamic_augmentation:
+        pass
+        # train_dataset = AugmentedDataset(
+        #     train['sequence'].tolist(),
+        #     {'order': train_order_labels, 'family': train_family_labels},
+        #     tokenizer
+        # )
     else:
         train_dataset = Dataset.from_dict({
             'input_ids': train_encodings['input_ids'],
             'attention_mask': train_encodings['attention_mask'],
-            'order_labels': train_order_labels,
-            'family_labels': train_family_labels
+            'labels': list(zip(train_order_labels,train_family_labels)),
+            
         })
 
     val_dataset = Dataset.from_dict({
         'input_ids': val_encodings['input_ids'],
         'attention_mask': val_encodings['attention_mask'],
-        'order_labels': val_order_labels,
-        'family_labels': val_family_labels
+        'labels': list(zip(val_order_labels,val_family_labels)),
     })
 
     test_dataset = Dataset.from_dict({
         'input_ids': test_encodings['input_ids'],
         'attention_mask': test_encodings['attention_mask'],
-        'order_labels': test_order_labels,
-        'family_labels': test_family_labels
+        'labels':list(zip(test_order_labels,test_family_labels)),
     })
 
     # Create id-to-label and label-to-id mappings

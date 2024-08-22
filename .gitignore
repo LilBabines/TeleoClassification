@@ -163,5 +163,6 @@ cython_debug/
 
 
 outputs/training
+outputs/main
 data/*/
 resources/*/
