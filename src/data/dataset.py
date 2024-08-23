@@ -19,6 +19,8 @@ def mutation(seq, mutation_ratio_min=LOW_NUC, mutation_ration_max=HIGHT_NUC, mut
 
 
 
+
+
 def load_data(path="Data/TeleoSplitGenera_300_medium/"):
     '''Load the dataset from the path/train.csv, path/test.csv, and path/val.csv
     Args:
@@ -54,7 +56,7 @@ class AugmentedDataset(Dataset):
         item['labels'] = label
         return item
 
-def encode_multiTaxa_dataset(tokenizer, train, val, test, dynamic_augmentation=False):
+def encode_multiTaxa_dataset(tokenizer, dir_path, dynamic_augmentation=False):
     '''Encode the data using the tokenizer for multi-label classification and return Datasets train/val/test.
     Args:
         tokenizer (PreTrainedTokenizerFast): The tokenizer
@@ -70,7 +72,7 @@ def encode_multiTaxa_dataset(tokenizer, train, val, test, dynamic_augmentation=F
         id2label_family (dict): The id to family label mapping
         label2id_family (dict): The family label to id mapping
     '''
-
+    train, test, val = load_data(dir_path)
     # Tokenize the sequences
     train_encodings = tokenizer(train['sequence'].tolist(), truncation=True, max_length=512)
     val_encodings = tokenizer(val['sequence'].tolist(), truncation=True, max_length=512)
@@ -97,7 +99,18 @@ def encode_multiTaxa_dataset(tokenizer, train, val, test, dynamic_augmentation=F
     train_family_labels = family_encoder.transform(train['family'])
     val_family_labels = family_encoder.transform(val['family'])
     test_family_labels = family_encoder.transform(test['family'])
+    
 
+    assert set(val_order_labels) not in set(train_order_labels), "val order labels not in train order labels"
+    assert set(test_order_labels) not in set(train_order_labels), "test order labels not in train order labels"
+    assert set(val_family_labels) not in set(train_family_labels), "val family labels not in train family labels"
+    assert set(test_family_labels) not in set(train_family_labels), "test family labels not in train family labels"
+
+
+    
+    
+
+    
     # If dynamic augmentation is enabled, apply custom dataset logic
     if False : #dynamic_augmentation:
         pass
@@ -134,7 +147,7 @@ def encode_multiTaxa_dataset(tokenizer, train, val, test, dynamic_augmentation=F
 
     return train_dataset, val_dataset, test_dataset, id2label_order, label2id_order, id2label_family, label2id_family
 
-def encode_dataset(tokenizer, train, val, test, dynamic_augmentation=False):
+def encode_singleTaxa_dataset(tokenizer, dir_path, dynamic_augmentation=False):
     '''Encode the data using the tokenizer
     Args:
         tokenizer (PreTrainedTokenizerFast): The tokenizer
@@ -148,9 +161,12 @@ def encode_dataset(tokenizer, train, val, test, dynamic_augmentation=False):
         id2label (dict): The id to label mapping
         label2id (dict): The label to id mapping
     '''
+    train, test, val = load_data(dir_path)
     if not dynamic_augmentation:
 
         train_encodings = tokenizer(train['sequence'].tolist(), truncation=True, max_length=512)
+
+        
     val_encodings = tokenizer(val['sequence'].tolist(), truncation=True, max_length=512)
     test_encodings = tokenizer(test['sequence'].tolist(), truncation=True, max_length=512)
 
@@ -164,6 +180,10 @@ def encode_dataset(tokenizer, train, val, test, dynamic_augmentation=False):
     train_labels = label_encoder.transform(train['family'])
     val_labels = label_encoder.transform(val['family'])
     test_labels = label_encoder.transform(test['family'])
+    
+    assert set(val_labels) not in set(train_labels), "val order labels not in train order labels"
+    assert set(test_labels) not in set(train_labels), "test order labels not in train order labels"
+    
     
     if dynamic_augmentation:
 

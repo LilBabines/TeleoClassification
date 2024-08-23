@@ -1,56 +1,46 @@
 import numpy as np
-from transformers import Trainer, TrainingArguments, DataCollatorWithPadding
+from transformers import Trainer, DataCollatorWithPadding
 import evaluate
 from torchmetrics.classification import MulticlassF1Score, MulticlassAccuracy
 import torch
 
-
+available_metrics = {
+        'MulticlassF1Score': MulticlassF1Score,
+        'MulticlassAccuracy': MulticlassAccuracy
+    }
     
 
+def define_metrics(num_classes,dict):
+    metrics_family = {}
+    metrics_order = {}
+
+    if isinstance(num_classes, int):
+
+
+        for metric_name, metric in dict.items():
         
+            metric_class = available_metrics[metric.callable](num_classes=num_classes, **metric.kwargs)
+        
+            metrics_family[metric_name+'_family'] = metric_class
+    else:
+        for metric_name, metric in dict.items():
+            
+            metric_class = available_metrics[metric.callable](num_classes=num_classes[0], **metric.kwargs)
+            metrics_order[metric_name+'_order'] = metric_class
+            
+            metric_class = available_metrics[metric.callable](num_classes=num_classes[1], **metric.kwargs)
+            metrics_family[metric_name+'_family'] = metric_class
+    return metrics_order,metrics_family
 
 
-def training_argument(**args): #output_path, learning_rate=1e-5, per_device_train_batch_size=16, per_device_eval_batch_size=16, num_train_epochs=20, weight_decay=0.01, eval_strategy="epoch", save_strategy="epoch", load_best_model_at_end=True, metric_for_best_model="f1", greater_is_better=True, push_to_hub=False
-    # arg=TrainingArguments(
-    #     output_dir=output_path,
-    #     learning_rate=learning_rate,
-    #     per_device_train_batch_size=per_device_train_batch_size,
-    #     per_device_eval_batch_size=per_device_eval_batch_size,
-    #     num_train_epochs=num_train_epochs,
-    #     weight_decay=weight_decay,
-    #     eval_strategy=eval_strategy,
-    #     save_strategy=save_strategy,
-    #     load_best_model_at_end=load_best_model_at_end,
-    #     metric_for_best_model=metric_for_best_model,
-    #     greater_is_better=greater_is_better,
-    #     push_to_hub=push_to_hub,
-    #     use_cpu=True
-    #     )
-    arg = TrainingArguments(**args)
-    return arg
 
-def define_trainer(model, tokenizer, train_dataset, val_dataset,num_classes, training_args):
+
+def define_trainer(model, tokenizer, train_dataset, val_dataset,num_classes,metrics, training_args):
 
     data_collator = DataCollatorWithPadding(tokenizer=tokenizer)
 
-    if isinstance(num_classes, int):
-        metrics_dict_family = {
-        'f1_micro': MulticlassF1Score(num_classes=num_classes, average='micro'),
-        'f1_macro': MulticlassF1Score(num_classes=num_classes, average='macro'),
-        'accuracy': MulticlassAccuracy(num_classes=num_classes)
-    }
+    metrics_dict_order, metrics_dict_family = define_metrics(num_classes,metrics)
 
-    else :
-        metrics_dict_order = {
-            'f1_micro_order': MulticlassF1Score(num_classes=num_classes[0], average='micro'),
-            'f1_macro_order': MulticlassF1Score(num_classes=num_classes[0], average='macro'),
-            'accuracy_order': MulticlassAccuracy(num_classes=num_classes[0])
-        }
-        metrics_dict_family = {
-            'f1_micro_family': MulticlassF1Score(num_classes=num_classes[1], average='micro'),
-            'f1_macro_family': MulticlassF1Score(num_classes=num_classes[1], average='macro'),
-            'accuracy_family': MulticlassAccuracy(num_classes=num_classes[1])
-        }
     
     def to_tensor(data):
         if isinstance(data, np.ndarray):
@@ -70,6 +60,7 @@ def define_trainer(model, tokenizer, train_dataset, val_dataset,num_classes, tra
         labels = to_tensor(labels)
 
         if labels.ndim == 2:
+            print("no")
             labels_order, labels_family= labels[:, 0], labels[:, 1]
             predictions_order , predictions_family = predictions
             for key, func in metrics_dict_order.items():
@@ -78,6 +69,9 @@ def define_trainer(model, tokenizer, train_dataset, val_dataset,num_classes, tra
                 output[key] = func(preds =predictions_family, target =labels_family)
 
         else :
+            if isinstance(predictions, tuple):
+                predictions = predictions[0]
+            
             for key, func in metrics_dict_family.items():
                 output[key] = func(preds =predictions, target =labels)
         

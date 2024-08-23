@@ -32,7 +32,7 @@ def plot_save_loss(result_path):
             x_val_loss.append(item['epoch'])
 
             y_val_loss.append(item['eval_loss']) 
-            y_f1.append(item['eval_f1'])
+            y_f1.append(item['eval_f1_macro_family'])
 
 
 
@@ -44,8 +44,8 @@ def plot_save_loss(result_path):
     plt.plot(x_val_loss,y_val_loss,label='Val Loss')
     plt.grid(True)
     plt.legend()
-    plt.savefig(f'Images/LOSS_{result_path.split("/")[-1]}.png')
-    plt.savefig(f'{result_path}/LOSS.png')
+    # plt.savefig(f'Images/LOSS_{result_path.split("/")[-1]}.png')
+    # plt.savefig(f'{result_path}/LOSS.png')
     plt.show()
 
 
@@ -56,6 +56,6 @@ def plot_save_loss(result_path):
     #plt.plot(x_train_loss,y_train_loss,label='Train Loss')
     plt.plot(x_val_loss,y_f1)
     plt.grid(True)
-    plt.savefig(f'{result_path}/PERF.png')
-    plt.savefig(f'Images/PERF_{result_path.split("/")[-1]}.png')
+    # plt.savefig(f'{result_path}/PERF.png')
+    # plt.savefig(f'Images/PERF_{result_path.split("/")[-1]}.png')
     plt.show()

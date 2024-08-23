@@ -3,57 +3,55 @@ hydra:
     dir: outputs/${hydra.job.name}/${now:%Y-%m-%d_%H-%M-%S}
 
 data:
-  dataset_path: "data/TeleoSplitGenera_300_medium"
+  dataset_path: "data/TeleoSplit_fill_nan/"
 
 task:
-  task: "multitaxa" # multiaxa or signletaxa
-  taxa_classes : ["order", "family"]
+  task: "singleTaxa" # multiTaxa or singleTaxa
+  # taxa_classes : ["order", "family"]
 
 trainer:
-  accelerator: "gpu"
-  devices: 1
+  learning_rate: 1e-5
   per_device_train_batch_size : 16
   per_device_eval_batch_size : 16
-  num_train_epochs : 20
+  weight_decay: 0.01
+  num_train_epochs : 2
   eval_delay : 0
-  eval_strategy : "epoch"
-  save_strategy : "no"
+  eval_strategy : "steps"
+
+  save_strategy : "steps"
   load_best_model_at_end: True
-  metric_for_best_model: "f1"
+  metric_for_best_model: "macro_f1_family"
   greater_is_better: True
   push_to_hub : False
 
 model:
   model_name: "zhihan1996/DNABERT-2-117M"
   tokenizer_name: "zhihan1996/DNABERT-2-117M"
-  max_length: 512
-  batch_size: 4
-  learning_rate: 1e-5
-  warmup_steps: 500
-  weight_decay: 0.01
-  gradient_accumulation_steps: 1
+  local : False  # set to True to load the model with model_name from local path
+  # max_length: 512
 
-optimizer:
-  learning_rate : 1e-5
-  weight_decay : 0.01
+loss :
   loss : "cross_entropy" # cross_entropy or BCEWithLogitsLoss
-  metrics :
-    macro_f1:
-      callable: 'Fmetrics.classification.f1_score'
-      kwargs: 
-        average: 'macro'
-    macro_accuracy:
-      callable: 'Fmetrics.classification.macro_accuracy'
-      kwargs:
-        average: 'macro'
-    micro_f1:
-      callable: 'Fmetrics.classification.f1_score'
-      kwargs: 
-        average: 'micro'
-    micro_accuracy:
-      callable: 'Fmetrics.classification.micro_accuracy'
-      kwargs:
-        average: 'micro'
+
+
+metrics:
+
+  macro_f1:
+    callable: 'MulticlassF1Score'
+    kwargs: 
+      average: 'macro'
+  macro_accuracy:
+    callable: 'MulticlassAccuracy'
+    kwargs:
+      average: 'macro'
+  micro_f1:
+    callable: 'MulticlassF1Score'
+    kwargs: 
+      average: 'micro'
+  micro_accuracy:
+    callable: 'MulticlassAccuracy'
+    kwargs:
+      average: 'micro'
 
 
 
