@@ -12,15 +12,14 @@ from datasets import load_dataset
 
 
 class MultiTaxaClassification(nn.Module):
-    def __init__(self, num_labels_order = 72, num_labels_family = 303  ):
+    def __init__(self, num_labels_order = 72, num_labels_family = 303, hidden_size =768, vocab_size = None,**bert_kwargs ):
         super(MultiTaxaClassification,self).__init__()
         
         self.num_labels = (num_labels_order, num_labels_family)
         
         self.problem_type = "multi_label_classification"
-
-        config = BertConfig.from_pretrained("zhihan1996/DNABERT-2-117M",
-                                    max_position_embeddings=514
+        self.hidden_size = hidden_size = 768
+        config = BertConfig.from_pretrained("zhihan1996/DNABERT-2-117M",vocab_size= vocab_size,**bert_kwargs
         )
         self.model = AutoModel.from_pretrained("zhihan1996/DNABERT-2-117M", trust_remote_code=True,config=config)
         hidden_size = self.model.config.hidden_size

@@ -1,12 +1,18 @@
 from matplotlib import pyplot as plt
 import json
 import os
+import glob
+
 
 def plot_save_loss(result_path):
     '''Plot and save the loss and f1 score from the result_path/trainer_state.json file
     Args:
         result_path (str): The path to the result folder
     '''
+    paths_checkpoints = glob.glob(os.path.join(result_path,'checkpoint-*'))
+    sorted_paths_checkpoints = sorted(paths_checkpoints, key=lambda x: int(x.split('-')[-1]))
+    result_path = sorted_paths_checkpoints[-1]
+    
     with open(os.path.join(result_path,'trainer_state.json'), 'r') as f:
         data = json.load(f)
         log=data['log_history']

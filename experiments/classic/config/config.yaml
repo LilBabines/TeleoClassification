@@ -28,7 +28,9 @@ model:
   model_name: "zhihan1996/DNABERT-2-117M"
   tokenizer_name: "zhihan1996/DNABERT-2-117M"
   local : False  # set to True to load the model with model_name from local path
-  # max_length: 512
+  bert_kwargs :
+    hidden_size: 768
+    max_position_embeddings: 514
 
 loss :
   loss : "cross_entropy" # cross_entropy or BCEWithLogitsLoss

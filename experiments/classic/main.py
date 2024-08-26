@@ -10,6 +10,10 @@ from utils.trainer import define_trainer
 from transformers import TrainingArguments
 from utils.visualize import plot_save_loss
 
+
+# TODO: Add diferent loss, BCEWithLogitsLoss for weight imbalance classes
+# TODO: -----------------, HierarchicalLoss for pénaliser les famille  qui ne sont pas dans l'ordre et que l'ordre est bien prédit
+# TODO: Add bertax model............. je vais encore m'amuser moi
 @hydra.main(version_base="1.3",config_path="config", config_name="config")
 def main(cfg: DictConfig):
     
@@ -22,7 +26,7 @@ def main(cfg: DictConfig):
         
         train_dataset, val_dataset, test_dataset, id2label_order, label2id_order, id2label_family, label2id_family = encode_multiTaxa_dataset(tokenizer, cfg.data.dataset_path)
         num_classes = (len(id2label_order) , len(id2label_family))
-        model = MultiTaxaClassification( len(id2label_order), len(id2label_family))  
+        model = MultiTaxaClassification( len(id2label_order), len(id2label_family),vocab_size = tokenizer.vocab_size,**cfg.model.bert_kwargs)  
     elif cfg.task.task == "singleTaxa":
         train, test, val = load_data(cfg.data.dataset_path)
         train_dataset, val_dataset, test_dataset, id2label, label2id = encode_singleTaxa_dataset(tokenizer,cfg.data.dataset_path )
@@ -35,7 +39,7 @@ def main(cfg: DictConfig):
     trainer = define_trainer(model, tokenizer, train_dataset, val_dataset, num_classes,cfg.metrics,args)
     
     trainer.train()
-    # plot_save_loss(log_dir+os.listdir(log_dir)[-1])
+    plot_save_loss(log_dir)
 
 if __name__ == "__main__":
     main()
