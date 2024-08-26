@@ -1,4 +1,5 @@
 from torch import nn
+import torch
 
 import os
 from transformers.modeling_outputs import SequenceClassifierOutput
@@ -29,7 +30,8 @@ class MultiTaxaClassification(nn.Module):
         
 
         self.classifier_order = nn.Linear(hidden_size, self.num_labels[0])
-        self.classifier_family = nn.Linear(hidden_size, self.num_labels[1])
+        self.classifier_family = nn.Linear(hidden_size + self.num_labels[0] , self.num_labels[1]) # Concatenate the order logits to the family logits
+        # self.classifier_family = nn.Linear(hidden_size, self.num_labels[1]) 
 
     def forward(
         self,
@@ -63,7 +65,7 @@ class MultiTaxaClassification(nn.Module):
         pooled_output = self.dropout(pooled_output)
         
         logits_order = self.classifier_order(pooled_output)
-        logits_family = self.classifier_family(pooled_output)
+        logits_family = self.classifier_family(torch.cat((pooled_output, logits_order), dim=1))
         logits = (logits_order, logits_family)
         
         

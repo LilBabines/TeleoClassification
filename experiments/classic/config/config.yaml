@@ -3,7 +3,7 @@ hydra:
     dir: outputs/${hydra.job.name}/${now:%Y-%m-%d_%H-%M-%S}
 
 data:
-  dataset_path: "data/TeleoSplit_fill_nan/"
+  dataset_path: "data/TeleoSplitSlack/"
 
 task:
   task: "singleTaxa" # multiTaxa or singleTaxa
