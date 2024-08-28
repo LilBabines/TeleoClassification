@@ -1,12 +1,12 @@
 hydra:
   run:
-    dir: outputs/${hydra.job.name}/${now:%Y-%m-%d_%H-%M-%S}
+    dir: outputs/TeleoSplitGenera_300_medium/DNABERT-2-117/multiTaxa
 
 data:
   dataset_path: "data/TeleoSplitGenera_300_medium/"
 
 task:
-  task: "singleTaxa" # multiTaxa or singleTaxa
+  task: "multiTaxa" # multiTaxa or singleTaxa
   # taxa_classes : ["order", "family"]
 
 trainer:
@@ -14,13 +14,13 @@ trainer:
   per_device_train_batch_size : 16
   per_device_eval_batch_size : 16
   weight_decay: 0.01
-  num_train_epochs : 1
+  num_train_epochs : 30
   eval_delay : 0
   eval_strategy : "steps"
-  eval_steps : 1000
+  eval_steps : 500
   logging_first_step : True
   save_strategy : "steps"
-  # load_best_model_at_end: True
+  load_best_model_at_end: True
   metric_for_best_model: "macro_accuracy_family"
   greater_is_better: True
   push_to_hub : False
@@ -34,7 +34,7 @@ model:
     max_position_embeddings: 514
 
 loss :
-  loss : "cross_entropy" # cross_entropy or BCEWithLogitsLoss
+  loss : "cross_entropy" # cross_entropy  ##### or BCEWithLogitsLoss not yet implemented
 
 
 metrics:
