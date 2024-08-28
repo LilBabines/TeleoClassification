@@ -6,7 +6,7 @@ data:
   dataset_path: "data/TeleoSplitGenera_300_medium/"
 
 task:
-  task: "multiTaxa" # multiTaxa or singleTaxa
+  task: "singleTaxa" # multiTaxa or singleTaxa
   # taxa_classes : ["order", "family"]
 
 trainer:
@@ -14,20 +14,20 @@ trainer:
   per_device_train_batch_size : 16
   per_device_eval_batch_size : 16
   weight_decay: 0.01
-  num_train_epochs : 2
+  num_train_epochs : 1
   eval_delay : 0
   eval_strategy : "steps"
   eval_steps : 1000
   logging_first_step : True
   save_strategy : "steps"
   # load_best_model_at_end: True
-  metric_for_best_model: "macro_f1_family"
+  metric_for_best_model: "macro_accuracy_family"
   greater_is_better: True
   push_to_hub : False
 
 model:
   model_name: "zhihan1996/DNABERT-2-117M"
-  tokenizer_name: "zhihan1996/DNABERT-2-117M"
+  tokenizer_name: "zhihan1996/DNABERT-2-117M"  # can train "bpe" or an int for k-mer
   local : False  # set to True to load the model with model_name from local path
   bert_kwargs :
     hidden_size: 768
@@ -39,18 +39,18 @@ loss :
 
 metrics:
 
-  macro_f1:
-    callable: 'MulticlassF1Score'
-    kwargs: 
-      average: 'macro'
+  # macro_f1:
+  #   callable: 'MulticlassF1Score'
+  #   kwargs: 
+  #     average: 'macro'
   macro_accuracy:
     callable: 'MulticlassAccuracy'
     kwargs:
       average: 'macro'
-  micro_f1:
-    callable: 'MulticlassF1Score'
-    kwargs: 
-      average: 'micro'
+  # micro_f1:
+  #   callable: 'MulticlassF1Score'
+  #   kwargs: 
+  #     average: 'micro'
   micro_accuracy:
     callable: 'MulticlassAccuracy'
     kwargs:

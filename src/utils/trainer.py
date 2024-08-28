@@ -4,7 +4,7 @@ from torchmetrics.classification import MulticlassF1Score, MulticlassAccuracy
 import torch
 
 available_metrics = {
-        'MulticlassF1Score': MulticlassF1Score,
+        # 'MulticlassF1Score': MulticlassF1Score,
         'MulticlassAccuracy': MulticlassAccuracy
     }
     
@@ -88,6 +88,4 @@ def define_trainer(model, tokenizer, train_dataset, val_dataset,num_classes,metr
         compute_metrics=compute_metrics
     )
 
-
-
-    return trainer
+    return trainer, list(metrics_dict_order.keys()), list(metrics_dict_family.keys())

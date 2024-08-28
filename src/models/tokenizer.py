@@ -113,7 +113,7 @@ def load_tokenizer(name="zhihan1996/DNABERT-2-117M"):
 
         if name=="bpe":
 
-            tokenizer = PreTrainedTokenizerFast(tokenizer_file="Model/tokenizer/teleo_4096.json")
+            tokenizer = PreTrainedTokenizerFast(tokenizer_file="resources/tokenizers/teleo_4096.json")
 
             tokenizer.add_special_tokens({'pad_token': '[PAD]'})
             tokenizer.add_special_tokens({'mask_token': '[MASK]'})

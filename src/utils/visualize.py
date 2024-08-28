@@ -4,12 +4,12 @@ import os
 import glob
 
 
-def plot_save_loss(result_path):
+def plot_save_loss(path, metrics):
     '''Plot and save the loss and f1 score from the result_path/trainer_state.json file
     Args:
         result_path (str): The path to the result folder
     '''
-    paths_checkpoints = glob.glob(os.path.join(result_path,'checkpoint-*'))
+    paths_checkpoints = glob.glob(os.path.join(path,'checkpoint-*'))
     sorted_paths_checkpoints = sorted(paths_checkpoints, key=lambda x: int(x.split('-')[-1]))
     result_path = sorted_paths_checkpoints[-1]
     
@@ -23,7 +23,7 @@ def plot_save_loss(result_path):
     x_val_loss=[]
     y_val_loss=[]
 
-    y_f1=[]
+    y_metrics={'eval_'+m : [] for m in metrics}
 
     for item in log:
         
@@ -38,30 +38,37 @@ def plot_save_loss(result_path):
             x_val_loss.append(item['epoch'])
 
             y_val_loss.append(item['eval_loss']) 
-            y_f1.append(item['eval_f1_macro_family'])
+            for m in metrics:
+                if 'eval_'+m in item.keys():
+                    y_metrics['eval_'+m].append(item['eval_'+m])
+                    
 
 
 
     plt.figure()
     plt.xlabel('Epoch')
     plt.ylabel('Loss')
-    plt.title("Train Val Loss, FISH Teleo 300 Medium 3 Mer")
+    plt.title("Train Val Loss")
     plt.plot(x_train_loss,y_train_loss,label='Train Loss')
     plt.plot(x_val_loss,y_val_loss,label='Val Loss')
     plt.grid(True)
     plt.legend()
     # plt.savefig(f'Images/LOSS_{result_path.split("/")[-1]}.png')
     # plt.savefig(f'{result_path}/LOSS.png')
+    plt.savefig(f'{path}/LOSS.png')
     plt.show()
 
 
     plt.figure()
     plt.xlabel('Epoch')
-    plt.ylabel('F1 score')
-    plt.title("Val Performance, FISH Teleo 300 Medium 3 Mer")
+    plt.ylabel('Metrics')
+    plt.title("Val Performance")
     #plt.plot(x_train_loss,y_train_loss,label='Train Loss')
-    plt.plot(x_val_loss,y_f1)
+    for key in y_metrics.keys():
+        plt.plot(x_val_loss,y_metrics[key],label=key)
+    plt.legend()
     plt.grid(True)
-    # plt.savefig(f'{result_path}/PERF.png')
-    # plt.savefig(f'Images/PERF_{result_path.split("/")[-1]}.png')
+
+    plt.savefig(f'{path}/PERF.png')
+    
     plt.show()

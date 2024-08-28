@@ -36,11 +36,14 @@ def main(cfg: DictConfig):
         raise ValueError("cfg.task.task has to be either 'multiTaxa' or 'singleTaxa'")
     
     args = TrainingArguments(output_dir=log_dir,**cfg.trainer)
-    trainer = define_trainer(model, tokenizer, train_dataset, val_dataset, num_classes,cfg.metrics,args)
+    trainer, metrics_order, metrics_family = define_trainer(model, tokenizer, train_dataset, val_dataset, num_classes,cfg.metrics,args)
     
     trainer.train()
-    plot_save_loss(log_dir)
+    plot_save_loss(log_dir, metrics = metrics_order +metrics_family)
+    
+    result = trainer.evaluate(test_dataset)
+    print(result)
 
 if __name__ == "__main__":
     main()
-    # plot_save_loss(r'outputs\main\2024-08-23_15-52-05\checkpoint-19640')
+    
