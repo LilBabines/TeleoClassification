@@ -1,6 +1,5 @@
 import numpy as np
 from transformers import Trainer, DataCollatorWithPadding
-import evaluate
 from torchmetrics.classification import MulticlassF1Score, MulticlassAccuracy
 import torch
 
