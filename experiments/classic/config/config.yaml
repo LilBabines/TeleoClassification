@@ -20,10 +20,14 @@ trainer:
   eval_steps : 500
   logging_first_step : True
   save_strategy : "steps"
-  load_best_model_at_end: True
+  
   metric_for_best_model: "macro_accuracy_family"
   greater_is_better: True
   push_to_hub : False
+  # save best and last checkpoint only
+  save_total_limit : 1
+  load_best_model_at_end : True
+  
 
 model:
   model_name: "zhihan1996/DNABERT-2-117M"

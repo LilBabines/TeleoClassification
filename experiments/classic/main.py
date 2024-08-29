@@ -28,12 +28,13 @@ def main(cfg: DictConfig):
         num_classes = (len(id2label_order) , len(id2label_family))
         model = MultiTaxaClassification( len(id2label_order), len(id2label_family),vocab_size = tokenizer.vocab_size,**cfg.model.bert_kwargs)  
     elif cfg.task.task == "singleTaxa":
-        train, test, val = load_data(cfg.data.dataset_path)
+
         train_dataset, val_dataset, test_dataset, id2label, label2id = encode_singleTaxa_dataset(tokenizer,cfg.data.dataset_path )
         num_classes = len(id2label)
         model = load_bert_model(cfg.model.model_name, tokenizer.vocab_size, local=cfg.model.local, id2label=id2label, label2id=label2id)
     else:
         raise ValueError("cfg.task.task has to be either 'multiTaxa' or 'singleTaxa'")
+    
     
     args = TrainingArguments(output_dir=log_dir,**cfg.trainer)
     trainer, metrics_order, metrics_family = define_trainer(model, tokenizer, train_dataset, val_dataset, num_classes,cfg.metrics,args)
@@ -45,5 +46,9 @@ def main(cfg: DictConfig):
     print(result)
 
 if __name__ == "__main__":
+    
     main()
+
+    # d= ['macro_accuracy_order', 'micro_accuracy_order', 'macro_accuracy_family', 'micro_accuracy_family']
+    # plot_save_loss(r"C:\Users\Auguste Verdier\Desktop\TeleoClassification\outputs\TeleoSplitGenera_300_medium\DNABERT-2-117\multiTaxa", metrics = d)
     
