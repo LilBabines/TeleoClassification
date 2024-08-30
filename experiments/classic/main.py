@@ -2,12 +2,15 @@ import hydra
 from omegaconf import DictConfig
 import os
 import sys 
+import pandas as pd
 sys.path.append(os.path.join(os.getcwd(), 'src'))
 from models.tokenizer import load_tokenizer
 from data.dataset import load_data, encode_multiTaxa_dataset, encode_singleTaxa_dataset
 from models.model import MultiTaxaClassification, load_bert_model
 from utils.trainer import define_trainer
-from transformers import TrainingArguments
+from transformers import TrainingArguments, AutoModel
+import torch
+from safetensors import safe_open
 from utils.visualize import plot_save_loss
 
 
@@ -35,20 +38,44 @@ def main(cfg: DictConfig):
     else:
         raise ValueError("cfg.task.task has to be either 'multiTaxa' or 'singleTaxa'")
     
-    
+    if not cfg.task.train :
+        
+        with safe_open(cfg.task.checkpoint_path+'/model.safetensors', framework="pt", device="cpu") as f:
+            state_dict = {key: f.get_tensor(key) for key in f.keys()}
+        model.load_state_dict(state_dict)   
+
     args = TrainingArguments(output_dir=log_dir,**cfg.trainer)
     trainer, metrics_order, metrics_family = define_trainer(model, tokenizer, train_dataset, val_dataset, num_classes,cfg.metrics,args)
+
+    if cfg.task.train :
+
+        trainer.train()
+        plot_save_loss(log_dir, metrics = metrics_order +metrics_family)
     
-    trainer.train()
-    plot_save_loss(log_dir, metrics = metrics_order +metrics_family)
+        
+    result = trainer.predict(test_dataset)
     
-    result = trainer.evaluate(test_dataset)
-    print(result)
+    if cfg.task.save_preds :
+
+        if cfg.task.task == "multiTaxa":
+            dataframe = pd.DataFrame( columns = ["preds_order","preds_family", "labels_order", "labels_family"]) 
+            dataframe["preds_order"] = result.predictions[0].argmax(axis=1).squeeze()
+            dataframe["preds_family"] = result.predictions[1].argmax(axis=1).squeeze()
+            dataframe["labels_order"] = result.label_ids[:,0]
+            dataframe["labels_family"] = result.label_ids[:,1]
+            # dataframe["labels"] = result.label_ids
+            # torch.save(result.predictions, os.path.join(log_dir,"predictions.pt"))
+            # torch.save(result.label_ids, os.path.join(log_dir,"labels.pt"))
+            dataframe.to_csv(os.path.join(log_dir,"predictions.csv"), index=False)
+        else : 
+            print("Saving predictions for singleTaxa not implemented yet")
+    
+    
 
 if __name__ == "__main__":
     
     main()
-
+    
     # d= ['macro_accuracy_order', 'micro_accuracy_order', 'macro_accuracy_family', 'micro_accuracy_family']
     # plot_save_loss(r"C:\Users\Auguste Verdier\Desktop\TeleoClassification\outputs\TeleoSplitGenera_300_medium\DNABERT-2-117\multiTaxa", metrics = d)
     
