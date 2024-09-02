@@ -12,7 +12,7 @@ from transformers import TrainingArguments, AutoModel
 import torch
 from safetensors import safe_open
 from utils.visualize import plot_save_loss
-
+from transformers.integrations import TensorBoardCallback
 
 # TODO: Add diferent loss, BCEWithLogitsLoss for weight imbalance classes
 # TODO: -----------------, HierarchicalLoss for pénaliser les famille  qui ne sont pas dans l'ordre et que l'ordre est bien prédit
@@ -44,7 +44,7 @@ def main(cfg: DictConfig):
             state_dict = {key: f.get_tensor(key) for key in f.keys()}
         model.load_state_dict(state_dict)   
 
-    args = TrainingArguments(output_dir=log_dir,**cfg.trainer)
+    args = TrainingArguments(output_dir=log_dir,**cfg.trainer,report_to="tensorboard")
     trainer, metrics_order, metrics_family = define_trainer(model, tokenizer, train_dataset, val_dataset, num_classes,cfg.metrics,args)
 
     if cfg.task.train :
@@ -61,11 +61,15 @@ def main(cfg: DictConfig):
             dataframe = pd.DataFrame( columns = ["preds_order","preds_family", "labels_order", "labels_family"]) 
             dataframe["preds_order"] = result.predictions[0].argmax(axis=1).squeeze()
             dataframe["preds_family"] = result.predictions[1].argmax(axis=1).squeeze()
+            
             dataframe["labels_order"] = result.label_ids[:,0]
             dataframe["labels_family"] = result.label_ids[:,1]
-            # dataframe["labels"] = result.label_ids
-            # torch.save(result.predictions, os.path.join(log_dir,"predictions.pt"))
-            # torch.save(result.label_ids, os.path.join(log_dir,"labels.pt"))
+
+
+            import pickle
+
+            
+            pickle.dump({'preds':result.predictions,'labels':result.label_ids}, open(os.path.join(log_dir,"predictions.pkl"), 'wb'))
             dataframe.to_csv(os.path.join(log_dir,"predictions.csv"), index=False)
         else : 
             print("Saving predictions for singleTaxa not implemented yet")
