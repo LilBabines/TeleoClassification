@@ -19,9 +19,8 @@ class MultiTaxaClassification(nn.Module):
         
         self.problem_type = "multi_label_classification"
         self.hidden_size = hidden_size = 768
-        config = BertConfig.from_pretrained("zhihan1996/DNABERT-2-117M",vocab_size= vocab_size,**bert_kwargs
-        )
-        self.model = AutoModel.from_pretrained("zhihan1996/DNABERT-2-117M", trust_remote_code=True,config=config)
+        config = BertConfig.from_pretrained("zhihan1996/DNABERT-2-117M",vocab_size= vocab_size,**bert_kwargs )
+        self.model = AutoModel.from_pretrained("zhihan1996/DNABERT-2-117M", trust_remote_code=True,config=config, ignore_mismatched_sizes=True)
         hidden_size = self.model.config.hidden_size
         classifier_dropout = 0.1
 

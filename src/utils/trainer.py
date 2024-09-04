@@ -34,7 +34,7 @@ def define_metrics(num_classes,dict):
 
 
 
-def define_trainer(model, tokenizer, train_dataset, val_dataset,num_classes,metrics, training_args):
+def define_trainer(model, tokenizer, train_dataset, val_dataset,num_classes,metrics, training_args, callbacks=[]):
 
     data_collator = DataCollatorWithPadding(tokenizer=tokenizer)
 
@@ -85,7 +85,8 @@ def define_trainer(model, tokenizer, train_dataset, val_dataset,num_classes,metr
         eval_dataset=val_dataset,
         tokenizer=tokenizer,
         data_collator=data_collator,
-        compute_metrics=compute_metrics
+        compute_metrics=compute_metrics,
+        callbacks=callbacks
     )
 
     return trainer, list(metrics_dict_order.keys()), list(metrics_dict_family.keys())
