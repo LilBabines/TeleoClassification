@@ -8,11 +8,10 @@ from models.tokenizer import load_tokenizer
 from data.dataset import load_data, encode_multiTaxa_dataset, encode_singleTaxa_dataset
 from models.model import MultiTaxaClassification, load_bert_model
 from utils.trainer import define_trainer
-from transformers import TrainingArguments, AutoModel
+from transformers import TrainingArguments, AutoModel, EarlyStoppingCallback
 import torch
 from safetensors import safe_open
 from utils.visualize import plot_save_loss
-from transformers.integrations import TensorBoardCallback
 
 # TODO: Add diferent loss, BCEWithLogitsLoss for weight imbalance classes
 # TODO: -----------------, HierarchicalLoss for pénaliser les famille  qui ne sont pas dans l'ordre et que l'ordre est bien prédit
@@ -44,8 +43,8 @@ def main(cfg: DictConfig):
             state_dict = {key: f.get_tensor(key) for key in f.keys()}
         model.load_state_dict(state_dict)   
 
-    args = TrainingArguments(output_dir=log_dir,**cfg.trainer,report_to="tensorboard")
-    trainer, metrics_order, metrics_family = define_trainer(model, tokenizer, train_dataset, val_dataset, num_classes,cfg.metrics,args)
+    args = TrainingArguments(output_dir=log_dir,**cfg.trainer.kwargs,report_to="tensorboard")
+    trainer, metrics_order, metrics_family = define_trainer(model, tokenizer, train_dataset, val_dataset, num_classes,cfg.metrics,args,callbacks=[EarlyStoppingCallback(early_stopping_patience=cfg.trainer.early_stopping_patience)])
 
     if cfg.task.train :
 
@@ -54,7 +53,7 @@ def main(cfg: DictConfig):
     
         
     result = trainer.predict(test_dataset)
-    
+    print("Metrics on test set: ", result.metrics)
     if cfg.task.save_preds :
 
         if cfg.task.task == "multiTaxa":
@@ -72,9 +71,21 @@ def main(cfg: DictConfig):
             pickle.dump({'preds':result.predictions,'labels':result.label_ids}, open(os.path.join(log_dir,"predictions.pkl"), 'wb'))
             dataframe.to_csv(os.path.join(log_dir,"predictions.csv"), index=False)
         else : 
-            print("Saving predictions for singleTaxa not implemented yet")
-    
-    
+            
+            dataframe = pd.DataFrame( columns = ["preds_family", "labels_family"]) 
+           
+            dataframe["preds_family"] = result.predictions[0].argmax(axis=1).squeeze()
+            
+            
+            dataframe["labels_family"] = result.label_ids
+
+
+            import pickle
+
+            
+            pickle.dump({'preds':result.predictions,'labels':result.label_ids}, open(os.path.join(log_dir,"predictions.pkl"), 'wb'))
+            dataframe.to_csv(os.path.join(log_dir,"predictions.csv"), index=False)
+    model.save_pretrained(log_dir)
 
 if __name__ == "__main__":
     
