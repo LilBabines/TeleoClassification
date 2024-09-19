@@ -9,7 +9,7 @@ For this study, we utilized the [MIDORI2 Reference](https://www.reference-midori
 
 ## Deep Classification
 
-We pre-trained and fine-tuned diffent models, such as [DNABERT-2](https://doi.org/10.48550/arXiv.2306.15006), <span style="color:red"> other soon ? </span>. To reproduce the results from the paper or  fine-tune / infer  on your own data follow instruction in [BerTeleo directory](./scripts/BERTeleo/README.md).
+We pre-trained and fine-tuned various models, including [DNABERT-2](https://doi.org/10.48550/arXiv.2306.15006), with more to come soon. To reproduce the results from the paper or to fine-tune/infer using your own data, please follow the instructions in the [BerTeleo directory](./scripts/BERTeleo/README.md).
 
 ### Libraries
 Here is an overview of the main Python librairies used in this project.
@@ -20,13 +20,9 @@ Here is an overview of the main Python librairies used in this project.
 * [![Model on HF](https://huggingface.co/datasets/huggingface/badges/resolve/main/model-on-hf-sm.svg)](https://huggingface.co/) - To load, build and train models
 
 
+## Other methods (Obitools, MMseq2, Kmer)
 
-
-## Obitools
-
-## K-mer
-
-## Team
+## Team 
 
 **Lab :** UMR MARBEC - Montpellier France 
 
