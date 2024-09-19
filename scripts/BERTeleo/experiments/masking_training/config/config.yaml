@@ -1,0 +1,80 @@
+hydra:
+  run:
+    dir: experiments/masking_training/outputs/TeleoSplitGenera_300_medium_4mer
+
+data:
+  dataset_path: "experiments/masking_training/data/TeleoSplitGenera_300_medium_4mer/"
+
+task:
+  train : True  # False if just want to load model and evaluate, true to train before it
+  checkpoint_path : None
+  save_preds : False
+  task: "masking" # multiTaxa or singleTaxa or masking
+  
+  # taxa_classes : ["order", "family"]
+
+trainer:
+  kwargs :
+
+    learning_rate: 2e-5
+    per_device_train_batch_size : 16
+    per_device_eval_batch_size : 16
+    weight_decay: 0.01
+    num_train_epochs : 50
+    eval_delay : 0
+    eval_strategy : "steps"
+    eval_steps : 800
+    logging_steps : 800
+    save_steps : 800
+    logging_first_step : True
+    save_strategy : "steps"
+    
+    metric_for_best_model: "eval_loss"
+    greater_is_better: False
+    push_to_hub : False
+    # save best and last checkpoint only
+    save_total_limit : 2
+    load_best_model_at_end : True
+
+    #tensorboard
+    report_to :  "tensorboard"
+    logging_dir : "experiments/masking_training/outputs/TeleoSplitGenera_300_medium_4mer/logs"
+  early_stopping_patience : 80
+  
+
+model:
+  model_name: "zhihan1996/DNABERT-2-117M"
+  tokenizer_name: 4 #"zhihan1996/DNABERT-2-117M"  # can train "bpe" or an int for k-mer
+  local : False  # set to True to load the model with model_name from local path
+  mlm_probability : 0.20
+  bert_kwargs :
+    hidden_size: 768
+    max_position_embeddings: 514
+    ignore_mismatched_sizes: True
+
+# loss :
+  #loss : "cross_entropy" # cross_entropy  ##### or BCEWithLogitsLoss not yet implemented
+
+
+# metrics:
+
+#   # macro_f1:
+#   #   callable: 'MulticlassF1Score'
+#   #   kwargs: 
+#   #     average: 'macro'
+#   macro_accuracy:
+#     callable: 'MulticlassAccuracy'
+#     kwargs:
+#       average: 'macro'
+#   # micro_f1:
+#   #   callable: 'MulticlassF1Score'
+#   #   kwargs: 
+#   #     average: 'micro'
+#   micro_accuracy:
+#     callable: 'MulticlassAccuracy'
+#     kwargs:
+#       average: 'micro'
+
+
+
+  

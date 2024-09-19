@@ -55,6 +55,25 @@ class AugmentedDataset(Dataset):
         item = {key: val.squeeze() for key, val in encodings.items()}
         item['labels'] = label
         return item
+def encode_self_supervised_dataset(tokenizer, dir_path):
+    train, test, val = load_data(dir_path)
+    # Tokenize the sequences
+    train_encodings = tokenizer(train['sequence'].tolist(), truncation=True, max_length=512)
+    val_encodings = tokenizer(val['sequence'].tolist(), truncation=True, max_length=512)
+    train_dataset = Dataset.from_dict({
+            'input_ids': train_encodings['input_ids'],
+            'attention_mask': train_encodings['attention_mask'],
+           
+            
+        })
+
+    val_dataset = Dataset.from_dict({
+        'input_ids': val_encodings['input_ids'],
+        'attention_mask': val_encodings['attention_mask'],
+       
+    })
+    return train_dataset, val_dataset, 
+
 
 def encode_multiTaxa_dataset(tokenizer, dir_path, dynamic_augmentation=False):
     '''Encode the data using the tokenizer for multi-label classification and return Datasets train/val/test.
