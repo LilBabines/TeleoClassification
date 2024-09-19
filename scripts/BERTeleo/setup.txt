@@ -1,0 +1,15 @@
+1 - create python env
+
+with conda : conda create -n teleo_classif python
+
+2- install package
+
+conda activate teleo_classif
+pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+pip install transformers[torch]
+pip install hydra-core
+pip install datasets
+pip install scikit-learn
+pip install torchmetrics
+pip install matplotlib
+pip install einops

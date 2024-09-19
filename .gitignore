@@ -167,5 +167,6 @@ outputs/main
 outputs/TeleoSplitGenera_300_medium
 data/*/
 resources/*/
-
+mlm_pre_training/
+scripts/BERTeleo/resources/
 RESULTS/BERTAX
