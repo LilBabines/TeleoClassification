@@ -145,6 +145,14 @@ def load_bert_model(name, vocab_size, local=False, id2label=None, label2id=None)
     model.resize_token_embeddings(vocab_size)
     return model
 
+def get_best(checkpoints_dir):
+    checkpoints = os.listdir(checkpoints_dir)
+    checkpoints = [i for i in checkpoints if "checkpoint" in i]
+    checkpoints = [int(i.split("-")[1]) for i in checkpoints]
+    checkpoints.sort()
+    return os.path.join(checkpoints_dir,f"checkpoint-{checkpoints[0]}")
+
+
 if __name__=='__main__':
 
 

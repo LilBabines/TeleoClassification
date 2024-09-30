@@ -1,9 +1,9 @@
 hydra:
   run:
-    dir: experiments/fine_tune_taxa/outputs/fold_1_multitaxa_4mer_mlm
+    dir: experiments/fine_tune_taxa/outputs/6_fold_multitaxa_4mer_mlm
 
 data:
-  dataset_path: "experiments/fine_tune_taxa/data/fold_1/"
+  dataset_path: "experiments/fine_tune_taxa/data/"
 
 task:
   train : True  # False if just want to load model and evaluate, true to train before it
@@ -20,13 +20,11 @@ trainer:
     per_device_train_batch_size : 16
     per_device_eval_batch_size : 16
     weight_decay: 0.001
-    num_train_epochs : 1
-    max_steps : 30
-    eval_delay : 0
+    num_train_epochs : 50
     eval_strategy : "steps"
-    eval_steps : 10
-    logging_steps : 10
-    save_steps : 10
+    eval_steps : 1200
+    logging_steps : 1200
+    save_steps : 1200
     logging_first_step : True
     save_strategy : "steps"
     
@@ -34,16 +32,16 @@ trainer:
     greater_is_better: True
     push_to_hub : False
     # save best and last checkpoint only
-    save_total_limit : 1
+    save_total_limit : 2
     load_best_model_at_end : True
-  early_stopping_patience : 80
+  early_stopping_patience : 24
   
 
 model:
   model_name: "zhihan1996/DNABERT-2-117M"
-  tokenizer_name: "zhihan1996/DNABERT-2-117M"  # can train "bpe" or an int for k-mer
+  tokenizer_name: 4  # can train "bpe" or an int for k-mer
   local : True  # set to True to load the model with model_name from local path
-  local_path : "experiments/masking_training/outputs/6_fold_masking_pre_train/4mer/checkpoints/fold_1/checkpoint-740000"
+  local_path : "experiments/masking_training/outputs/6_fold_masking_pre_train/4mer/checkpoints/"
   bert_kwargs :
     hidden_size: 768
     max_position_embeddings: 514

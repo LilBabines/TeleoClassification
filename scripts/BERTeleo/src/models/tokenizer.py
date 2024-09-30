@@ -131,7 +131,7 @@ class KmerTokenizer(PreTrainedTokenizer):
 
 class KmerBertTokenizer(BertTokenizer):
     def __init__(self, vocab_file, k, **kwargs):
-        super().__init__(vocab_file=vocab_file, **kwargs)
+        super().__init__(vocab_file=vocab_file,cleaup_tokenization_spaces =True, **kwargs)
         self.k = k
 
     def tokenize(self, text, **kwargs):
@@ -170,9 +170,12 @@ def load_tokenizer(name="zhihan1996/DNABERT-2-117M"):
 
      
     elif isinstance(name, int):
-        if not os.path.exists(f"resources/vocab_{name}mer.txt"):
+        if not os.path.exists(f"resources/tokenizers/vocab_{name}mer.txt"):
             generate_kmer_vocab(name)
-        tokenizer = KmerBertTokenizer(vocab_file=f"resources/vocab_{name}mer.txt", k=name)
+        print("-----------------")
+        print(f"Generated {name}-mer vocabulary")
+        print("-----------------")
+        tokenizer = KmerBertTokenizer(vocab_file=f"resources/tokenizers/vocab_{name}mer.txt", k=name)
 
        
     return tokenizer 

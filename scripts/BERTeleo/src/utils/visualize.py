@@ -56,7 +56,7 @@ def plot_save_loss(path, metrics):
     # plt.savefig(f'Images/LOSS_{result_path.split("/")[-1]}.png')
     # plt.savefig(f'{result_path}/LOSS.png')
     plt.savefig(f'{path}/LOSS.png')
-    plt.show()
+    # plt.show()
 
 
     plt.figure()
@@ -71,4 +71,4 @@ def plot_save_loss(path, metrics):
 
     plt.savefig(f'{path}/PERF.png')
     
-    plt.show()
+    # plt.show()
