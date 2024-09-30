@@ -170,3 +170,11 @@ resources/*/
 mlm_pre_training/
 scripts/BERTeleo/resources/
 RESULTS/BERTAX
+*.fastq
+*.zip
+*.csv
+*.gz
+*.tsv
+*checkpoint/
+*logs/
+*.json

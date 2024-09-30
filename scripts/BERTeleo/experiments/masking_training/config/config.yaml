@@ -1,9 +1,10 @@
 hydra:
   run:
-    dir: experiments/masking_training/outputs/TeleoSplitGenera_300_medium_4mer
+    dir: experiments/masking_training/outputs/6_fold_masking_pre_train
 
 data:
-  dataset_path: "experiments/masking_training/data/TeleoSplitGenera_300_medium_4mer/"
+  kfold : True
+  dataset_path: "experiments/masking_training/data/teleo/6_fold_masking_pre_train/"
 
 task:
   train : True  # False if just want to load model and evaluate, true to train before it
@@ -20,12 +21,14 @@ trainer:
     per_device_train_batch_size : 16
     per_device_eval_batch_size : 16
     weight_decay: 0.01
-    num_train_epochs : 50
+    num_train_epochs : 40
+  
+    
     eval_delay : 0
     eval_strategy : "steps"
-    eval_steps : 800
-    logging_steps : 800
-    save_steps : 800
+    eval_steps : 4000
+    logging_steps : 4000
+    save_steps : 4000
     logging_first_step : True
     save_strategy : "steps"
     
@@ -38,8 +41,8 @@ trainer:
 
     #tensorboard
     report_to :  "tensorboard"
-    logging_dir : "experiments/masking_training/outputs/TeleoSplitGenera_300_medium_4mer/logs"
-  early_stopping_patience : 80
+    
+  # early_stopping_patience : 80
   
 
 model:

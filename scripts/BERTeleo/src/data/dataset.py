@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 from datasets import Dataset
 from sklearn.preprocessing import LabelEncoder
-
+import os
 
 LOW_NUC = 2/40
 
@@ -31,9 +31,12 @@ def load_data(path="Data/TeleoSplitGenera_300_medium/"):
         val (pd.DataFrame): The validation dataset
 
     '''
-    train = pd.read_csv(path + "train.csv")
-    test = pd.read_csv(path + "test.csv")
-    val = pd.read_csv(path + "val.csv")
+    train = pd.read_csv(os.path.join(path , "train.csv"))
+    val = pd.read_csv(os.path.join(path ,  "val.csv"))
+    if 'test.csv' in os.listdir(path):
+        test = pd.read_csv(os.path.join(path ,  "test.csv"))
+    else:
+        test = None
     return train, test, val
 
 class AugmentedDataset(Dataset):
@@ -56,7 +59,7 @@ class AugmentedDataset(Dataset):
         item['labels'] = label
         return item
 def encode_self_supervised_dataset(tokenizer, dir_path):
-    train, test, val = load_data(dir_path)
+    train, _, val = load_data(dir_path)
     # Tokenize the sequences
     train_encodings = tokenizer(train['sequence'].tolist(), truncation=True, max_length=512)
     val_encodings = tokenizer(val['sequence'].tolist(), truncation=True, max_length=512)

@@ -1,0 +1,77 @@
+hydra:
+  run:
+    dir: experiments/fine_tune_taxa/outputs/fold_1_multitaxa_4mer_mlm
+
+data:
+  dataset_path: "experiments/fine_tune_taxa/data/fold_1/"
+
+task:
+  train : True  # False if just want to load model and evaluate, true to train before it
+  checkpoint_path : "checkpoint-120000"
+  save_preds : True
+  task: "multiTaxa" # multiTaxa or singleTaxa
+  
+  # taxa_classes : ["order", "family"]
+
+trainer:
+  kwargs :
+
+    learning_rate: 1e-5
+    per_device_train_batch_size : 16
+    per_device_eval_batch_size : 16
+    weight_decay: 0.001
+    num_train_epochs : 1
+    max_steps : 30
+    eval_delay : 0
+    eval_strategy : "steps"
+    eval_steps : 10
+    logging_steps : 10
+    save_steps : 10
+    logging_first_step : True
+    save_strategy : "steps"
+    
+    metric_for_best_model: "macro_accuracy_family"
+    greater_is_better: True
+    push_to_hub : False
+    # save best and last checkpoint only
+    save_total_limit : 1
+    load_best_model_at_end : True
+  early_stopping_patience : 80
+  
+
+model:
+  model_name: "zhihan1996/DNABERT-2-117M"
+  tokenizer_name: "zhihan1996/DNABERT-2-117M"  # can train "bpe" or an int for k-mer
+  local : True  # set to True to load the model with model_name from local path
+  local_path : "experiments/masking_training/outputs/6_fold_masking_pre_train/4mer/checkpoints/fold_1/checkpoint-740000"
+  bert_kwargs :
+    hidden_size: 768
+    max_position_embeddings: 514
+    ignore_mismatched_sizes: True
+
+loss :
+  loss : "cross_entropy" # cross_entropy  ##### or BCEWithLogitsLoss not yet implemented
+
+
+metrics:
+
+  # macro_f1:
+  #   callable: 'MulticlassF1Score'
+  #   kwargs: 
+  #     average: 'macro'
+  macro_accuracy:
+    callable: 'MulticlassAccuracy'
+    kwargs:
+      average: 'macro'
+  # micro_f1:
+  #   callable: 'MulticlassF1Score'
+  #   kwargs: 
+  #     average: 'micro'
+  micro_accuracy:
+    callable: 'MulticlassAccuracy'
+    kwargs:
+      average: 'micro'
+
+
+
+  

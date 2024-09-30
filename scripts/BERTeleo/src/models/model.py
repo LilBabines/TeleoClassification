@@ -12,16 +12,16 @@ from datasets import load_dataset
 
 
 class MultiTaxaClassification(nn.Module):
-    def __init__(self, num_labels_order = 72, num_labels_family = 303, hidden_size =768, vocab_size = None,**bert_kwargs ):
+    def __init__(self, num_labels_order = 72, num_labels_family = 303, vocab_size = None,**bert_kwargs ):
         super(MultiTaxaClassification,self).__init__()
         
         self.num_labels = (num_labels_order, num_labels_family)
-        
         self.problem_type = "multi_label_classification"
-        self.hidden_size = hidden_size = 768
         config = BertConfig.from_pretrained("zhihan1996/DNABERT-2-117M",vocab_size= vocab_size,**bert_kwargs )
-        self.model = AutoModel.from_pretrained("zhihan1996/DNABERT-2-117M", trust_remote_code=True,config=config, ignore_mismatched_sizes=True)
-        hidden_size = self.model.config.hidden_size
+        self.bert = AutoModel.from_pretrained("zhihan1996/DNABERT-2-117M", trust_remote_code=True,config=config, ignore_mismatched_sizes=True)
+        self.bert.resize_token_embeddings(vocab_size)
+        
+        hidden_size = self.bert.config.hidden_size
         classifier_dropout = 0.1
 
         self.dropout = nn.Dropout(classifier_dropout)
@@ -47,7 +47,7 @@ class MultiTaxaClassification(nn.Module):
         
         
 
-        outputs = self.model(
+        outputs = self.bert(
             input_ids,
             attention_mask=attention_mask,
             token_type_ids=token_type_ids,
