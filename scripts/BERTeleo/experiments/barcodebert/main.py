@@ -7,7 +7,7 @@ import pandas as pd
 sys.path.append(os.path.join(os.getcwd(), 'src'))
 from models.tokenizer import load_tokenizer
 from data.dataset import load_data, encode_multiTaxa_dataset, encode_singleTaxa_dataset
-from models.model import MultiTaxaClassification, load_bert_model, get_best
+from models.model import MultiTaxaClassification, load_bert_model, get_best, BarcodeBert_model
 from utils.trainer import define_trainer
 from utils.visualize import plot_save_loss
 
@@ -30,7 +30,7 @@ def main(cfg: DictConfig):
     print("log_dir: ", log_dir)
     
 
-    tokenizer = load_tokenizer(cfg.model.tokenizer_name)
+    tokenizer = load_tokenizer(4)
     print("len tokenizer: ", tokenizer.vocab_size)
 
     for fold in os.listdir(cfg.data.dataset_path):
@@ -40,40 +40,30 @@ def main(cfg: DictConfig):
         if os.path.exists(os.path.join(log_dir,'checkpoints',fold)):
             print("Fold already trained")
             continue
-        print('-----------------')
+        print('-----------------\n')
         print("Model Initialization")
-        if cfg.task.task == "multiTaxa":
+        # if cfg.task.task == "multiTaxa":
             
-            train_dataset, val_dataset, test_dataset, id2label_order, label2id_order, id2label_family, label2id_family = encode_multiTaxa_dataset(tokenizer, os.path.join(cfg.data.dataset_path,fold))
-            num_classes = (len(id2label_order) , len(id2label_family))
+        #     train_dataset, val_dataset, test_dataset, id2label_order, label2id_order, id2label_family, label2id_family = encode_multiTaxa_dataset(tokenizer, os.path.join(cfg.data.dataset_path,fold))
+        #     num_classes = (len(id2label_order) , len(id2label_family))
 
-            model = MultiTaxaClassification( len(id2label_order), len(id2label_family),vocab_size = tokenizer.vocab_size,**cfg.model.bert_kwargs)  
+        #     model = MultiTaxaClassification( len(id2label_order), len(id2label_family),vocab_size = tokenizer.vocab_size,**cfg.model.bert_kwargs)  
 
-        elif cfg.task.task == "singleTaxa":
+        # elif cfg.task.task == "singleTaxa":
 
-            train_dataset, val_dataset, test_dataset, id2label, label2id = encode_singleTaxa_dataset(tokenizer,os.path.join(cfg.data.dataset_path,fold))
-            num_classes = len(id2label)
-            model = load_bert_model(cfg.model.model_name, tokenizer.vocab_size, local=cfg.model.local, id2label=id2label, label2id=label2id)
-        else:
-            raise ValueError("cfg.task.task has to be either 'multiTaxa' or 'singleTaxa'")
-        
-        if cfg.model.local:
-            best_model = get_best(os.path.join(cfg.model.local_path,fold))
-            print("best_model: ", best_model)
-            
-            masked_lm_model = bert_layers.BertForMaskedLM.from_pretrained(best_model)
-            
-            
-            model.bert.load_state_dict(masked_lm_model.bert.state_dict(),strict=False)
-        
-
+        train_dataset, val_dataset, test_dataset, id2label, label2id = encode_singleTaxa_dataset(tokenizer,os.path.join(cfg.data.dataset_path,fold))
+        num_classes = len(id2label)
+        model = BarcodeBert_model(checkpoint="resources/barecodeBert/new_model_4.pth",num_labels= num_classes ,vocab_size=tokenizer.vocab_size)
+            # model = load_bert_model(cfg.model.model_name, tokenizer.vocab_size, local=cfg.model.local, id2label=id2label, label2id=label2id)
+       
         args = TrainingArguments(os.path.join(log_dir,'checkpoints',fold),
                                  **cfg.trainer.kwargs,
                                  save_safetensors=False, 
                                  logging_dir = os.path.join(log_dir,'logs',fold))
         trainer, metrics_order, metrics_family = define_trainer(model, tokenizer, train_dataset, val_dataset, num_classes,cfg.metrics,args,callbacks=[EarlyStoppingCallback(early_stopping_patience=cfg.trainer.early_stopping_patience)]) #
-
+        print("\n")
         print("Training")
+
         if cfg.task.train :
             try:
 

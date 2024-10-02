@@ -178,3 +178,4 @@ RESULTS/BERTAX
 *checkpoint/
 *logs/
 *.json
+*log/

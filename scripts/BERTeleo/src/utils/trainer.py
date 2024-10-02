@@ -59,7 +59,6 @@ def define_trainer(model, tokenizer, train_dataset, val_dataset,num_classes,metr
         labels = to_tensor(labels)
 
         if labels.ndim == 2:
-            print("no")
             labels_order, labels_family= labels[:, 0], labels[:, 1]
             predictions_order , predictions_family = predictions
             for key, func in metrics_dict_order.items():

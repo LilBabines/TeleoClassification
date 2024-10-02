@@ -3,12 +3,84 @@ import torch
 
 import os
 from transformers.modeling_outputs import SequenceClassifierOutput
-from transformers import AutoModel, AutoModel, BertConfig
+from transformers import AutoModel, AutoModel, BertConfig, BertForMaskedLM
 
 from transformers import AutoModelForSequenceClassification
 from datasets import load_dataset
 
 
+#BarCodeBERT : https://github.com/Kari-Genomics-Lab/BarcodeBERT/blob/main/scripts/BarcodeBERT/Fine-tuning.py
+# Paper : https://arxiv.org/abs/2311.02401
+class BarcodeBert_model(nn.Module):
+    def __init__(self, checkpoint, num_labels, vocab_size):
+        super(BarcodeBert_model, self).__init__()
+        self.num_labels = num_labels
+        # Load Model with given checkpoint
+        self.model = BertForMaskedLM(BertConfig(vocab_size=int(vocab_size), output_hidden_states=True))
+        self.model.load_state_dict(torch.load(checkpoint, map_location="cuda:0", weights_only=True), strict=False )
+        self.classifier = nn.Linear(768, self.num_labels)
+
+    def forward(self, input_ids=None, labels=None, attention_mask=None):
+        # Getting the embedding
+        outputs = self.model(input_ids=input_ids,attention_mask=attention_mask)
+        embeddings = outputs.hidden_states[-1]
+        GAP_embeddings = embeddings.mean(1)
+        # calculate losses
+        logits = self.classifier(GAP_embeddings.view(-1, 768))
+        loss = None
+        if labels is not None:
+            loss_fct = nn.CrossEntropyLoss()
+            loss = loss_fct(logits.view(-1, self.num_labels), labels.view(-1))
+
+        return SequenceClassifierOutput(loss=loss, logits=logits, hidden_states=outputs.hidden_states)
+
+        # return TokenClassifierOutput(loss=loss, logits=logits, hidden_states=outputs.hidden_states)
+
+class HierachicalLoss(nn.Module):
+    def __init__(self, num_orders, num_families, compatibility_matrix, lambda_penalty=0.1, loss_fn_order=None, loss_fn_family=None):
+        super(HierachicalLoss, self).__init__()
+
+        # Loss functions for order and family
+        self.loss_fn_order = loss_fn_order if loss_fn_order else nn.CrossEntropyLoss()
+        self.loss_fn_family = loss_fn_family if loss_fn_family else nn.CrossEntropyLoss()
+        
+        # Compatibility matrix for hierarchical relationships
+        self.compatibility_matrix = compatibility_matrix  # Shape: (num_orders, num_families)
+        self.lambda_penalty = lambda_penalty  # Regularization strength for hierarchical penalty
+
+        # Ensure compatibility matrix is the correct size and is a tensor
+        assert compatibility_matrix.shape == (num_orders, num_families)
+        self.compatibility_matrix = torch.tensor(compatibility_matrix, dtype=torch.float32)
+
+    def forward(self, logits_order, logits_family, labels_order, labels_family):
+        # Compute order loss
+        loss_order = self.loss_fn_order(logits_order, labels_order)
+        
+        # Compute family loss
+        loss_family = self.loss_fn_family(logits_family, labels_family)
+
+        # Total loss is the sum of the two losses
+        total_loss = loss_order + loss_family
+        
+        # Add hierarchical penalty based on compatibility
+        with torch.no_grad():
+            # Get the predicted order and family
+            pred_order = torch.argmax(logits_order, dim=-1)  # Shape: (batch_size,)
+            pred_family = torch.argmax(logits_family, dim=-1)  # Shape: (batch_size,)
+
+            # Check if both order and family are incorrect
+            both_incorrect = (pred_order != labels_order) & (pred_family != labels_family)
+
+            # Retrieve compatibility between predicted orders and families
+            compatibility_scores = self.compatibility_matrix[pred_order, pred_family]  # Shape: (batch_size,)
+
+            # Penalize if the prediction is incorrect and incompatible
+            hierarchical_penalty = both_incorrect.float() * (1 - compatibility_scores)
+
+        # Add the hierarchical penalty to the total loss
+        total_loss += self.lambda_penalty * hierarchical_penalty.mean()
+
+        return total_loss
 
 
 class MultiTaxaClassification(nn.Module):

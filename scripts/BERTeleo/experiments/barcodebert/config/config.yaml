@@ -1,15 +1,15 @@
 hydra:
   run:
-    dir: experiments/fine_tune_taxa/outputs/6_fold_multitaxa_dnaber2
+    dir: experiments/barcodebert/outputs/6_fold_single_barcodebert
 
 data:
-  dataset_path: "experiments/fine_tune_taxa/data/"
+  dataset_path: "experiments/barcodebert/data/"
 
 task:
   train : True  # False if just want to load model and evaluate, true to train before it
   checkpoint_path : "checkpoint-120000"
   save_preds : True
-  task: "multiTaxa" # multiTaxa or singleTaxa
+  task: "singleTaxa" # multiTaxa or singleTaxa
   
   # taxa_classes : ["order", "family"]
 
@@ -20,7 +20,7 @@ trainer:
     per_device_train_batch_size : 16
     per_device_eval_batch_size : 16
     weight_decay: 0.001
-    num_train_epochs : 35
+    num_train_epochs : 15
     eval_strategy : "steps"
     eval_steps : 1200
     logging_steps : 1200
@@ -39,9 +39,9 @@ trainer:
 
 model:
   model_name: "zhihan1996/DNABERT-2-117M"
-  tokenizer_name: "zhihan1996/DNABERT-2-117M"  # can train "bpe" or an int for k-mer
-  local : False  # set to True to load the model with model_name from local path
-  local_path :  "bigitte" # "experiments/masking_training/outputs/6_fold_masking_pre_train/4mer/checkpoints/"
+  tokenizer_name: 4  # can train "bpe" or an int for k-mer
+  local : True  # set to True to load the model with model_name from local path
+  local_path : " "
   bert_kwargs :
     hidden_size: 768
     max_position_embeddings: 514
