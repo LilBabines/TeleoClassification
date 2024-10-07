@@ -172,10 +172,12 @@ scripts/BERTeleo/resources/
 RESULTS/BERTAX
 *.fastq
 *.zip
-*.csv
+*.csv*
 *.gz
 *.tsv
 *checkpoint/
 *logs/
 *.json
 *log/
+*.fasta
+*.ecotag
