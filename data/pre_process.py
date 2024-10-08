@@ -1,4 +1,4 @@
-# After CRABS extraction on FISHBASE and NCBI, error treshold is set to 3
+# After CRABS extraction on mitofish and NCBI, error treshold is set to 3
 
 import pandas as pd
 import numpy as np
@@ -6,6 +6,8 @@ from sklearn.model_selection import train_test_split, KFold
 import math
 import json
 import os
+import random
+from tqdm import tqdm
 
 def pre_process(mitophish, ncbi):
     '''
@@ -219,7 +221,6 @@ def get_repartition(data_path):
 
     return repartition
 
-
 def build_file(data_path):
     '''
     Build the file for the training
@@ -249,10 +250,6 @@ def build_file(data_path):
         val[['sequence', 'order' , 'family', 'genus','species']].to_csv(f"data/teleo_clean/fold_{i+1}/val.csv", sep=',', index=False, header=True)
         train[['sequence', 'order' , 'family', 'genus', 'species']].to_csv(rf"data/teleo_clean/fold_{i+1}/train.csv", sep=',', index=False, header=True)
         test[['sequence', 'order' , 'family', 'genus', 'species']].to_csv(rf"data/teleo_clean/fold_{i+1}/test.csv", sep=',', index=False, header=True)
-    
-import random
-from tqdm import tqdm
-import pandas as pd
 
 def mutate_dna_sequence(sequence, mutation_probability):
     mutated_sequence = ""
@@ -289,8 +286,6 @@ def split_and_mutate_sequence(sequence):
     
     # Return the mutated sequence
     return mutated_sequence
-
-
 
 def mutate(df):
     # Calculate the value count of the "family" column

@@ -28,6 +28,12 @@ Refer to CRABS instalation [github](https://github.com/gjeunen/reference_databas
 
 * MIDORI2 : `crabs assign_tax --input "data/12S/teleo_12S_3/output_pga_3.fasta" --output /data/12S/teleo_12S_3/output_pga_3.tsv --acc2tax nucl_gb.accession2taxid --taxid nodes.dmp --name names.dmp --missing "/data/12S/teleo_12S_3/teleo_missing_taxa.tsv"`
 
-The two `output_pga_3.tsv` contains ....
-
 ## Process raw Teleo (duplicates, augmentation)
+
+Processing steps from the two remaining `output_pga_3.tsv` ([pre_process.py functions](pre_process.py) ) :
+1. `pre_process(mitophish, ncbi)`, clean raw data by fill Nan values, keep only fish, remove short ( less than 20 ) or uncertain (contains nucleotide `N`) sequences
+2. `fold_6_data(data_path, n_splits=6)`, build a 6 fold partition, stratified at genus level (genus in val or test are not in train)
+3. `def get_repartition(data_path)`, check fold repartition
+4. `build_file(data_path)`, save 6_fold dataset with `train.csv`, `val.csv`, `test.csv` and `test_genus.json` (json list contains genus in val and test)
+5. `mutate_data_fold(data_path)`, mutate data for deep-learning, mutate ratio are based genetic diversity analyse.
+
