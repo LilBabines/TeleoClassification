@@ -12,7 +12,7 @@ from utils.trainer import define_trainer
 from utils.visualize import plot_save_loss
 
 sys.path.append(os.path.join(os.getcwd(), 'resources'))
-from dnabert2  import bert_layers
+# from dnabert2  import bert_layers
 
 from transformers import TrainingArguments, AutoModel, EarlyStoppingCallback
 import torch
