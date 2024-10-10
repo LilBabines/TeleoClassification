@@ -5,7 +5,7 @@
 * [MIDORI2 Reference](https://www.reference-midori.info/download.php) : dowload 12S reads via this [link](https://www.reference-midori.info/download/Databases/GenBank261_2024-06-15/RAW/total/MIDORI2_TOTAL_NUC_GB261_srRNA_RAW.fasta.gz) and unzip it at [data/crabs/12S repository](data/crabs/12S)
 * [MitoFish](https://mitofish.aori.u-tokyo.ac.jp/) : via CRABS comand see below
 
-## Extract teleo marker via [CRABS](https://doi.org/10.1111/1755-0998.13741)
+## Extract teleo marker via [CRABS](https://doi.org/10.1111/1755-0998.13741) v.0.1.8
 
 Refer to CRABS instalation [github](https://github.com/gjeunen/reference_database_creator?tab=readme-ov-file#installing-crabs). We will need Docker, conda or manually install CRABS (tested on Linux and Mac system).
 
